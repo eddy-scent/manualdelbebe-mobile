@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Nurture &amp; Grow</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "tertiary-fixed-dim": "#d5c5a5",
+            "on-primary-container": "#fffbff",
+            "error": "#ba1a1a",
+            "surface-variant": "#e5e2dc",
+            "inverse-on-surface": "#f3f0ea",
+            "on-surface-variant": "#574146",
+            "secondary": "#006783",
+            "tertiary-fixed": "#f2e1c0",
+            "secondary-fixed": "#bde9ff",
+            "on-tertiary": "#ffffff",
+            "on-tertiary-fixed": "#231a07",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#ac2b5b",
+            "primary": "#a82958",
+            "on-error-container": "#93000a",
+            "surface-container-high": "#ebe8e2",
+            "on-secondary-fixed": "#001f2a",
+            "surface-container-highest": "#e5e2dc",
+            "tertiary": "#675b41",
+            "inverse-surface": "#31312d",
+            "on-surface": "#1c1c18",
+            "surface": "#fcf9f3",
+            "background": "#fcf9f3",
+            "primary-fixed-dim": "#ffb1c4",
+            "on-tertiary-container": "#fffbff",
+            "secondary-container": "#87d9fd",
+            "tertiary-container": "#807358",
+            "on-error": "#ffffff",
+            "surface-container-lowest": "#ffffff",
+            "outline-variant": "#ddbfc5",
+            "on-background": "#1c1c18",
+            "inverse-primary": "#ffb1c4",
+            "primary-fixed": "#ffd9e0",
+            "on-tertiary-fixed-variant": "#50462e",
+            "on-secondary-fixed-variant": "#004d64",
+            "surface-container": "#f0eee8",
+            "on-primary-fixed-variant": "#8b0d43",
+            "error-container": "#ffdad6",
+            "primary-container": "#c94371",
+            "surface-container-low": "#f6f3ed",
+            "surface-bright": "#fcf9f3",
+            "on-primary": "#ffffff",
+            "outline": "#8a7176",
+            "on-secondary-container": "#00607b",
+            "surface-dim": "#dcdad4",
+            "on-primary-fixed": "#3f001a",
+            "secondary-fixed-dim": "#7fd1f5"
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px"
+          },
+          spacing: {
+            margin: "20px",
+            lg: "40px",
+            sm: "12px",
+            md: "24px",
+            base: "8px",
+            xs: "4px",
+            xl: "64px",
+            gutter: "16px"
+          },
+          fontFamily: {
+            "headline-md": ["Plus Jakarta Sans"],
+            "body-md": ["Work Sans"],
+            "label-md": ["Work Sans"],
+            "headline-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Work Sans"],
+            "headline-xl": ["Plus Jakarta Sans"],
+            "body-lg": ["Work Sans"]
+          },
+          fontSize: {
+            "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+            "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "label-md": ["14px", { lineHeight: "20px", fontWeight: "600" }],
+            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "600" }],
+            "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+            "headline-xl": ["40px", { lineHeight: "48px", letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }]
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #fcf9f3; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .footer-link.active-tab {
+      color: #EB5D8B;
+      background-color: rgba(235,93,139,0.1);
+      border-radius: 12px;
+      padding: 4px 12px;
+    }
+    .footer-link.active-tab span:last-child {
+      color: #EB5D8B;
+      font-weight: 700;
+    }
+    @media (min-width: 768px) {
+      .mobile-footer { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen pb-24">
+
+  <!-- ==================== TOP HEADER (shared, desktop + mobile) ==================== -->
+  <header class="bg-[#F1EEE8] border-b border-[#807358]/10 flex justify-between items-center w-full px-5 py-3 sticky top-0 z-40">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden">
+        <img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQeTEslq4GMlAR9juDxDwDkz4wrUcoC8CzXjHRwwxHI_PJfch5r_XASZB18fzQ4DjjmuH4TyCFAEwNSYVXp4oZt3qBQnszSmXt4sdndSE-nqNU24olKTWz9jMSeojDz-rZHVKWuTh1COxAFvO3otZxcATQTk7i5Lx8yuD9E4tAKNWorZ31w1R4CyKljq_GmofiwdoQ-O3n1ngc9R9Pew1u6J4uCQMVA1D1KgbLRkF1pYrm3VE5YSiN9_-_er0_JfGOdcRKquKQgxk"/>
+      </div>
+    </div>
+    <div class="text-[#EB5D8B] font-bold text-xl tracking-tight font-headline-md" id="header-title">Nurture &amp; Grow</div>
+    <div class="flex items-center gap-1">
+      <button class="text-[#807358] hover:bg-[#EB5D8B]/5 transition-colors p-2 rounded-full">
+        <span class="material-symbols-outlined">notifications</span>
+      </button>
+      <button class="text-[#807358] hover:bg-[#EB5D8B]/5 transition-colors p-2 rounded-full">
+        <span class="material-symbols-outlined">settings</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== PAGE: INICIO SESIÓN ==================== -->
+  <div id="page-login" class="page active">
+    <div class="min-h-[calc(100dvh-64px)] flex items-center justify-center px-6 py-8">
+      <!-- Glows -->
+      <div class="fixed w-[70%] h-[70%] left-[-10%] top-[-15%] rounded-full bg-[rgba(255,177,196,0.35)] blur-3xl pointer-events-none"></div>
+      <div class="fixed w-[80%] h-[80%] right-[-10%] bottom-[-20%] rounded-full bg-[rgba(189,233,255,0.28)] blur-3xl pointer-events-none"></div>
+      
+      <div class="relative w-full max-w-sm bg-[rgba(252,249,243,0.95)] rounded-3xl border border-white/60 p-7 shadow-[0_10px_32px_rgba(168,41,88,0.08)]">
+        <!-- Header -->
+        <div class="flex flex-col items-center mb-6">
+          <div class="w-16 h-16 rounded-2xl bg-[#ffd9e0] flex items-center justify-center mb-3 shadow-[0_4px_16px_rgba(255,177,196,0.4)]">
+            <span class="text-[#a82958] text-3xl">♥</span>
+          </div>
+          <h1 class="text-[28px] font-bold text-[#1c1c18] text-center font-headline-md">Manual del Bebé</h1>
+          <p class="text-[#574146] text-base mt-2 text-center">Bienvenida a tu espacio seguro</p>
+        </div>
+
+        <!-- Form -->
+        <div class="flex flex-col gap-4">
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-2 block">Correo electrónico</label>
+            <div class="flex items-center bg-white rounded-[20px] border border-[#e5e2dc] px-4">
+              <span class="mr-3 text-lg">✉️</span>
+              <input type="email" placeholder="tu@email.com" class="flex-1 h-[52px] bg-transparent border-none outline-none text-[#1c1c18] text-base placeholder:text-[#8a7176]" id="login-email"/>
+            </div>
+          </div>
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-2 block">Contraseña</label>
+            <div class="flex items-center bg-white rounded-[20px] border border-[#e5e2dc] px-4">
+              <span class="mr-3 text-lg">🔒</span>
+              <input type="password" placeholder="••••••••" class="flex-1 h-[52px] bg-transparent border-none outline-none text-[#1c1c18] text-base placeholder:text-[#8a7176]" id="login-password"/>
+            </div>
+            <button class="text-[#006783] text-sm mt-2 w-full text-right hover:underline">¿Olvidaste tu contraseña?</button>
+          </div>
+          <button onclick="navigateTo('menu')" class="mt-1 bg-[#a82958] rounded-[20px] py-4 flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(168,41,88,0.25)] hover:bg-[#8b0d43] transition-colors active:scale-[0.97]">
+            <span class="text-white font-bold text-base">Iniciar Sesión</span>
+            <span class="text-white text-lg">➜</span>
+          </button>
+          <div class="mt-4 pt-4 border-t border-[rgba(229,226,220,0.5)] text-center">
+            <span class="text-[#574146] text-base">¿No tienes una cuenta? </span>
+            <button onclick="navigateTo('register')" class="text-[#006783] text-base font-semibold hover:underline">Crear cuenta</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE: REGISTRO ==================== -->
+  <div id="page-register" class="page">
+    <div class="min-h-[calc(100dvh-64px)] flex items-center justify-center px-6 py-8">
+      <div class="fixed w-[70%] h-[70%] left-[-10%] top-[-15%] rounded-full bg-[rgba(255,177,196,0.35)] blur-3xl pointer-events-none"></div>
+      <div class="fixed w-[80%] h-[80%] right-[-10%] bottom-[-20%] rounded-full bg-[rgba(189,233,255,0.28)] blur-3xl pointer-events-none"></div>
+      
+      <div class="relative w-full max-w-sm bg-[rgba(252,249,243,0.95)] rounded-3xl border border-white/60 p-7 shadow-[0_10px_32px_rgba(168,41,88,0.08)]">
+        <div class="flex flex-col items-center mb-6">
+          <div class="w-16 h-16 rounded-2xl bg-[#ffd9e0] flex items-center justify-center mb-3">
+            <span class="text-[#a82958] text-3xl">♥</span>
+          </div>
+          <h1 class="text-[28px] font-bold text-[#1c1c18] text-center font-headline-md">Crear Cuenta</h1>
+          <p class="text-[#574146] text-base mt-2 text-center">Completa tus datos para empezar</p>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-1.5 block">Nombre completo</label>
+            <input type="text" placeholder="Laura García" class="w-full h-[48px] bg-white rounded-[20px] border border-[#e5e2dc] px-4 text-[#1c1c18] text-base placeholder:text-[#8a7176] outline-none"/>
+          </div>
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-1.5 block">Correo electrónico</label>
+            <input type="email" placeholder="tu@email.com" class="w-full h-[48px] bg-white rounded-[20px] border border-[#e5e2dc] px-4 text-[#1c1c18] text-base placeholder:text-[#8a7176] outline-none"/>
+          </div>
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-1.5 block">Contraseña</label>
+            <div class="flex items-center bg-white rounded-[20px] border border-[#e5e2dc] px-4">
+              <input type="password" placeholder="••••••••" class="flex-1 h-[48px] bg-transparent border-none outline-none text-[#1c1c18] text-base placeholder:text-[#8a7176]"/>
+            </div>
+          </div>
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-1.5 block">Fecha de nacimiento</label>
+            <input type="text" placeholder="DD/MM/AAAA" class="w-full h-[48px] bg-white rounded-[20px] border border-[#e5e2dc] px-4 text-[#1c1c18] text-base placeholder:text-[#8a7176] outline-none"/>
+          </div>
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-1.5 block">Fecha de última menstruación (FUM)</label>
+            <input type="text" placeholder="DD/MM/AAAA" class="w-full h-[48px] bg-white rounded-[20px] border border-[#e5e2dc] px-4 text-[#1c1c18] text-base placeholder:text-[#8a7176] outline-none"/>
+          </div>
+          <div>
+            <label class="text-[#574146] text-sm font-semibold mb-1.5 block">Fecha probable de parto</label>
+            <input type="text" placeholder="DD/MM/AAAA" class="w-full h-[48px] bg-white rounded-[20px] border border-[#e5e2dc] px-4 text-[#1c1c18] text-base placeholder:text-[#8a7176] outline-none"/>
+          </div>
+          <button onclick="navigateTo('menu')" class="mt-2 bg-[#a82958] rounded-[20px] py-4 flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(168,41,88,0.25)] hover:bg-[#8b0d43] transition-colors active:scale-[0.97]">
+            <span class="text-white font-bold text-base">Crear cuenta</span>
+            <span class="text-white text-lg">➜</span>
+          </button>
+          <div class="mt-2 pt-3 border-t border-[rgba(229,226,220,0.5)] text-center">
+            <span class="text-[#574146] text-base">¿Ya tienes cuenta? </span>
+            <button onclick="navigateTo('login')" class="text-[#006783] text-base font-semibold hover:underline">Iniciar sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE: MENU (HOME) ==================== -->
+  <div id="page-menu" class="page">
+    <main class="max-w-4xl mx-auto p-5 md:p-6 space-y-6">
+      <!-- Welcome & Progress -->
+      <section class="flex flex-col gap-6">
+        <div class="text-center md:text-left">
+          <h1 class="text-[32px] font-semibold text-[#1c1c18] font-headline-lg" style="line-height:40px">Hola, Laura</h1>
+          <p class="text-[18px] text-[#574146] mt-1 font-body-lg">Tu peque y tú están haciendo un trabajo increíble.</p>
+        </div>
+
+        <!-- Progress Card -->
+        <div class="relative overflow-hidden rounded-[24px] p-6 bg-gradient-to-br from-[#c94371] to-[#ac2b5b] text-white shadow-[0_8px_24px_rgba(168,41,88,0.15)]">
+          <div class="absolute -top-12 -right-12 w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+          <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+          <div class="relative z-10 flex flex-col md:flex-row justify-between items-center md:items-start gap-6">
+            <div class="flex flex-col text-center md:text-left">
+              <span class="text-[12px] font-semibold text-white/80 uppercase tracking-wider">Progreso Actual</span>
+              <h2 class="text-[40px] font-bold text-white leading-none my-1 font-headline-xl">Semana 24</h2>
+              <p class="text-base text-white/90">Segundo Trimestre - Faltan 112 días</p>
+            </div>
+            <div class="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+              <span class="material-symbols-outlined text-white text-[64px]" style="font-variation-settings: 'FILL' 1;">child_care</span>
+            </div>
+          </div>
+          <div class="relative z-10 mt-4">
+            <div class="w-full bg-white/20 rounded-full h-3 mb-2 overflow-hidden">
+              <div class="bg-white h-3 rounded-full" style="width: 60%"></div>
+            </div>
+            <div class="flex justify-between text-[12px] text-white/80 font-medium">
+              <span>Semana 1</span>
+              <span>Semana 40</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculator Buttons -->
+        <div class="grid grid-cols-2 gap-5">
+          <button class="flex flex-col items-center justify-center p-5 bg-[#f6f3ed] rounded-xl border border-[#ddbfc5]/30 hover:bg-[#f0eee8] transition-colors active:scale-[0.97]">
+            <div class="w-10 h-10 rounded-full bg-[#a82958]/10 flex items-center justify-center text-[#a82958] mb-2">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+            </div>
+            <span class="text-sm font-semibold text-[#1c1c18] text-center">Calculadora de Ovulación</span>
+          </button>
+          <button class="flex flex-col items-center justify-center p-5 bg-[#f6f3ed] rounded-xl border border-[#ddbfc5]/30 hover:bg-[#f0eee8] transition-colors active:scale-[0.97]">
+            <div class="w-10 h-10 rounded-full bg-[#006783]/10 flex items-center justify-center text-[#006783] mb-2">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">child_care</span>
+            </div>
+            <span class="text-sm font-semibold text-[#1c1c18] text-center">Calculadora de Embarazo</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Bento Grid -->
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+        <!-- Baby Summary -->
+        <div class="bg-white rounded-[16px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border-t-[3px] border-[#87d9fd] flex flex-col gap-3">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-10 h-10 rounded-full bg-[#87d9fd]/20 flex items-center justify-center text-[#006783]">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">straighten</span>
+            </div>
+            <h3 class="text-[24px] font-semibold text-[#1c1c18] font-headline-md">Mi Bebé</h3>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-[#f0eee8] rounded-lg p-3 flex flex-col">
+              <span class="text-[12px] font-medium text-[#574146]">Tamaño est.</span>
+              <span class="text-lg font-bold text-[#1c1c18] mt-1">30 cm</span>
+              <span class="text-[12px] text-[#574146] mt-1">Como una mazorca</span>
+            </div>
+            <div class="bg-[#f0eee8] rounded-lg p-3 flex flex-col">
+              <span class="text-[12px] font-medium text-[#574146]">Peso est.</span>
+              <span class="text-lg font-bold text-[#1c1c18] mt-1">600 g</span>
+            </div>
+          </div>
+          <button class="mt-auto pt-3 text-sm font-semibold text-[#006783] text-left flex items-center gap-1 hover:opacity-80">
+            Ver desarrollo detallado <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+
+        <!-- Mother Summary -->
+        <div class="bg-white rounded-[16px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border-t-[3px] border-[#c94371] flex flex-col gap-3">
+          <div class="flex items-center gap-3 mb-1">
+            <div class="w-10 h-10 rounded-full bg-[#a82958]/10 flex items-center justify-center text-[#a82958]">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">monitor_weight</span>
+            </div>
+            <h3 class="text-[24px] font-semibold text-[#1c1c18] font-headline-md">Mi Salud</h3>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-[#f0eee8] rounded-lg p-3 flex flex-col">
+              <span class="text-[12px] font-medium text-[#574146]">Peso actual</span>
+              <span class="text-lg font-bold text-[#1c1c18] mt-1">68.5 kg</span>
+              <span class="text-[12px] text-[#a82958] mt-1">+4.5 kg total</span>
+            </div>
+            <div class="bg-[#f0eee8] rounded-lg p-3 flex flex-col">
+              <span class="text-[12px] font-medium text-[#574146]">Presión arte.</span>
+              <span class="text-lg font-bold text-[#1c1c18] mt-1">110/70</span>
+              <span class="text-[12px] text-[#807358] mt-1">Normal</span>
+            </div>
+          </div>
+          <button class="mt-auto pt-3 text-sm font-semibold text-[#a82958] text-left flex items-center gap-1 hover:opacity-80">
+            Actualizar métricas <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Upcoming Appointment -->
+      <section class="flex flex-col gap-3">
+        <h3 class="text-[24px] font-semibold text-[#1c1c18] font-headline-md">Próximos Eventos</h3>
+        <div class="bg-white rounded-[16px] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.03)] flex items-center justify-between">
+          <div class="flex items-center gap-5">
+            <div class="bg-[#f2e1c0] rounded-xl p-3 flex flex-col items-center justify-center w-16 h-16 text-[#231a07]">
+              <span class="text-sm font-semibold uppercase">Oct</span>
+              <span class="text-[24px] font-bold leading-none font-headline-md">15</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-sm font-semibold text-[#1c1c18]">Ecografía Estructural</span>
+              <span class="text-base text-[#574146] flex items-center gap-1 mt-1">
+                <span class="material-symbols-outlined text-[16px]">schedule</span> 10:00 AM - Dr. Martínez
+              </span>
+            </div>
+          </div>
+          <button class="w-10 h-10 rounded-full bg-[#f0eee8] hover:bg-[#e5e2dc] transition-colors flex items-center justify-center text-[#574146]">
+            <span class="material-symbols-outlined">more_vert</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- FAB - Dr. Manuel -->
+      <button class="fixed bottom-28 right-5 md:bottom-6 md:right-6 w-14 h-14 bg-[#a82958] rounded-full shadow-[0_8px_16px_rgba(168,41,88,0.3)] flex items-center justify-center hover:scale-105 transition-transform z-40 overflow-hidden border-0 p-0">
+        <img alt="Dr. Manuel" class="w-full h-full object-cover rounded-full border-2 border-white" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDy9qS55WU86rRACVQbHLNh-2ZNrqUVi3vopytyJXyEEX0xx4O8ctic8scp3HAkUQnVQuTV26DGPDS8HWFmVWKEBfVKs8w1bOXNIkMBRVmiC7jUyGdiEqk1Qjig0ITUlzJEBMJdnoslitt5btnJFj4Io7UjuGskkkEebKuve_5Gm3EMe4OZT96cu7Q9h4aAgUhDpYWfAScJuT-4dKXU_XTHEkVe3MCS8iHqN5_X5FUVTushfaamK8P9dWGLXjjK3CH8uCLdRJFgMkM"/>
+      </button>
+    </main>
+  </div>
+
+  <!-- ==================== PAGE: CALENDARIO ==================== -->
+  <div id="page-calendar" class="page">
+    <main class="max-w-4xl mx-auto p-5 md:p-6 space-y-5">
+      <!-- Calendar Header -->
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-[32px] font-bold text-[#1c1c18] font-headline-lg" id="calendar-month">October</h1>
+          <p class="text-sm text-[#807358]" id="calendar-year">2023</p>
+        </div>
+        <div class="flex gap-2 bg-white/95 rounded-[20px] p-1 border border-[#807358]/12">
+          <button onclick="prevMonth()" class="w-10 h-10 rounded-full flex items-center justify-center text-[#807358] hover:bg-[#f0eee8] transition-colors">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button onclick="nextMonth()" class="w-10 h-10 rounded-full flex items-center justify-center text-[#807358] hover:bg-[#f0eee8] transition-colors">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Grid -->
+      <div class="bg-white/95 rounded-3xl p-5 border border-[#8a7176]/12">
+        <div class="flex justify-around mb-4">
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">D</span>
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">L</span>
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">M</span>
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">M</span>
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">J</span>
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">V</span>
+          <span class="text-[12px] font-medium text-[#807358]/50 w-[14.28%] text-center">S</span>
+        </div>
+        <div class="flex flex-wrap" id="calendar-days"></div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex flex-col gap-2">
+        <button class="flex items-center gap-3 bg-[rgba(235,93,139,0.1)] border border-[rgba(235,93,139,0.3)] rounded-[20px] px-4 py-3 hover:bg-[rgba(235,93,139,0.15)] transition-colors active:scale-[0.98]">
+          <span class="text-lg">🏥</span>
+          <span class="text-sm font-semibold text-[#1c1c18]">Agregar cita médica</span>
+        </button>
+        <button class="flex items-center gap-3 bg-[rgba(235,93,139,0.1)] border border-[rgba(235,93,139,0.3)] rounded-[20px] px-4 py-3 hover:bg-[rgba(235,93,139,0.15)] transition-colors active:scale-[0.98]">
+          <span class="text-lg">✓</span>
+          <span class="text-sm font-semibold text-[#1c1c18]">Agregar tarea</span>
+        </button>
+        <button class="flex items-center gap-3 bg-[rgba(235,93,139,0.1)] border border-[rgba(235,93,139,0.3)] rounded-[20px] px-4 py-3 hover:bg-[rgba(235,93,139,0.15)] transition-colors active:scale-[0.98]">
+          <span class="text-lg">⭐</span>
+          <span class="text-sm font-semibold text-[#1c1c18]">Agregar fecha importante</span>
+        </button>
+      </div>
+
+      <!-- Today's Events -->
+      <section>
+        <h3 class="text-lg font-bold text-[#1c1c18] border-b border-[#807358]/10 pb-2 mb-4" id="events-today">Hoy, Oct 12</h3>
+        <div id="events-list" class="flex flex-col gap-3"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ==================== PAGE: PERFIL ==================== -->
+  <div id="page-profile" class="page">
+    <main class="max-w-4xl mx-auto p-5 md:p-6 space-y-6">
+      <!-- Profile Header -->
+      <div class="flex flex-col items-center mb-2">
+        <div class="w-20 h-20 rounded-full bg-[#ffd9e0] flex items-center justify-center mb-4">
+          <span class="text-[32px] font-bold text-[#a82958]">LG</span>
+        </div>
+        <h1 class="text-2xl font-bold text-[#1c1c18]">Laura García</h1>
+        <p class="text-sm text-[#807358] mb-4">laura.garcia@email.com</p>
+        <button class="bg-[#a82958] px-6 py-3 rounded-[20px] text-white text-sm font-semibold hover:bg-[#8b0d43] transition-colors active:scale-[0.97]">Editar Perfil</button>
+      </div>
+
+      <!-- Pregnancy Info -->
+      <div class="bg-white/95 rounded-2xl p-5 border border-[#8a7176]/12">
+        <h3 class="text-lg font-bold text-[#1c1c18] mb-4">Mi Embarazo</h3>
+        <div class="flex justify-around">
+          <div class="text-center">
+            <p class="text-2xl font-bold text-[#a82958]">24</p>
+            <p class="text-[12px] text-[#807358]">Semanas</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-[#a82958]">112</p>
+            <p class="text-[12px] text-[#807358]">Días restantes</p>
+          </div>
+          <div class="text-center">
+            <p class="text-2xl font-bold text-[#a82958]">Oct 15</p>
+            <p class="text-[12px] text-[#807358]">Fecha probable</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Menu Options -->
+      <div class="flex flex-col gap-2">
+        <button class="flex items-center bg-white/95 rounded-2xl p-4 border border-[#8a7176]/12 hover:bg-[#f6f3ed] transition-colors">
+          <span class="text-2xl mr-4">📊</span>
+          <div class="flex-1 text-left">
+            <p class="text-base font-semibold text-[#1c1c18]">Mis Estadísticas</p>
+            <p class="text-sm text-[#807358]">Seguimiento de peso y medidas</p>
+          </div>
+          <span class="text-xl text-[#807358]">›</span>
+        </button>
+        <button class="flex items-center bg-white/95 rounded-2xl p-4 border border-[#8a7176]/12 hover:bg-[#f6f3ed] transition-colors">
+          <span class="text-2xl mr-4">📅</span>
+          <div class="flex-1 text-left">
+            <p class="text-base font-semibold text-[#1c1c18]">Mis Citas</p>
+            <p class="text-sm text-[#807358]">Historial de consultas médicas</p>
+          </div>
+          <span class="text-xl text-[#807358]">›</span>
+        </button>
+        <button class="flex items-center bg-white/95 rounded-2xl p-4 border border-[#8a7176]/12 hover:bg-[#f6f3ed] transition-colors">
+          <span class="text-2xl mr-4">📝</span>
+          <div class="flex-1 text-left">
+            <p class="text-base font-semibold text-[#1c1c18]">Mis Notas</p>
+            <p class="text-sm text-[#807358]">Registro personal del embarazo</p>
+          </div>
+          <span class="text-xl text-[#807358]">›</span>
+        </button>
+        <button class="flex items-center bg-white/95 rounded-2xl p-4 border border-[#8a7176]/12 hover:bg-[#f6f3ed] transition-colors">
+          <span class="text-2xl mr-4">🔔</span>
+          <div class="flex-1 text-left">
+            <p class="text-base font-semibold text-[#1c1c18]">Recordatorios</p>
+            <p class="text-sm text-[#807358]">Configurar alertas y notificaciones</p>
+          </div>
+          <span class="text-xl text-[#807358]">›</span>
+        </button>
+      </div>
+
+      <!-- Logout -->
+      <button onclick="navigateTo('login')" class="w-full bg-white rounded-2xl py-4 text-center border border-[#ff6b6b] text-[#ff6b6b] font-semibold hover:bg-[#fff5f5] transition-colors active:scale-[0.97]">
+        Cerrar Sesión
+      </button>
+    </main>
+  </div>
+
+  <!-- ==================== FOOTER COMPARTIDO (sin Foro) ==================== -->
+  <nav id="app-footer" class="hidden fixed bottom-0 left-0 w-full z-50 bg-white/95 backdrop-blur-md border-t border-[#807358]/5 shadow-[0_-4px_12px_rgba(235,93,139,0.05)] flex justify-around items-center px-4 pb-6 pt-3 md:hidden">
+    <a onclick="navigateTo('menu')" class="footer-link flex flex-col items-center justify-center text-[#807358] px-3 py-1 transition-all duration-300 active:scale-95 cursor-pointer" data-page="menu">
+      <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">home</span>
+      <span class="text-[11px] mt-1 font-medium">Home</span>
+    </a>
+    <a onclick="navigateTo('calendar')" class="footer-link flex flex-col items-center justify-center text-[#807358] px-3 py-1 transition-all duration-300 active:scale-95 cursor-pointer" data-page="calendar">
+      <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 0;">calendar_month</span>
+      <span class="text-[11px] mt-1 font-medium">Calendario</span>
+    </a>
+    <a onclick="navigateTo('profile')" class="footer-link flex flex-col items-center justify-center text-[#807358] px-3 py-1 transition-all duration-300 active:scale-95 cursor-pointer" data-page="profile">
+      <span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 0;">person</span>
+      <span class="text-[11px] mt-1 font-medium">Perfil</span>
+    </a>
+  </nav>
+
+  <script>
+    // ==================== NAVIGATION ====================
+    const APP_PAGES = ['menu', 'calendar', 'profile'];
+
+    function navigateTo(page) {
+      // Hide all pages
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      // Show target page
+      const target = document.getElementById('page-' + page);
+      if (target) target.classList.add('active');
+
+      // Show/hide footer (only on app pages)
+      const footer = document.getElementById('app-footer');
+      if (APP_PAGES.includes(page)) {
+        footer.classList.remove('hidden');
+      } else {
+        footer.classList.add('hidden');
+      }
+
+      // Update footer active tab
+      document.querySelectorAll('.footer-link').forEach(link => {
+        link.classList.remove('active-tab');
+        const icon = link.querySelector('.material-symbols-outlined');
+        if (icon) icon.style.setProperty('--fill', '0');
+      });
+      const activeLink = document.querySelector(`.footer-link[data-page="${page}"]`);
+      if (activeLink) {
+        activeLink.classList.add('active-tab');
+        const icon = activeLink.querySelector('.material-symbols-outlined');
+        if (icon) icon.style.setProperty('--fill', '1');
+      }
+
+      // Update page title
+      const titles = { menu: 'Nurture &amp; Grow', calendar: 'Calendario', profile: 'Perfil', login: 'Nurture &amp; Grow', register: 'Nurture &amp; Grow' };
+      document.getElementById('header-title').innerHTML = titles[page] || 'Nurture &amp; Grow';
+
+      // If calendar, render days
+      if (page === 'calendar') renderCalendar();
+    }
+
+    // ==================== CALENDAR LOGIC ====================
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    let calMonth = 9; // October (0-indexed)
+    let calYear = 2023;
+    let selectedDay = 12;
+
+    const EVENTS = [
+      { day: 12, time: '09:00', period: 'AM', type: 'medical', title: '2-Month Checkup', location: "Dr. Smith's Clinic" },
+      { day: 12, time: '14:30', period: 'PM', type: 'task', title: 'Buy Formula & Diapers' },
+      { day: 12, time: 'All Day', period: '', type: 'milestone', title: "Grandma's Visit" },
+    ];
+
+    function prevMonth() {
+      calMonth--;
+      if (calMonth < 0) { calMonth = 11; calYear--; }
+      renderCalendar();
+    }
+
+    function nextMonth() {
+      calMonth++;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      document.getElementById('calendar-month').textContent = MONTHS[calMonth];
+      document.getElementById('calendar-year').textContent = calYear;
+
+      const grid = document.getElementById('calendar-days');
+      grid.innerHTML = '';
+
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=Sun
+      const prevMonthDays = new Date(calYear, calMonth, 0).getDate();
+
+      // Previous month gray days
+      for (let i = firstDay - 1; i >= 0; i--) {
+        const cell = createDayCell(prevMonthDays - i, false);
+        grid.appendChild(cell);
+      }
+
+      // Current month days
+      for (let i = 1; i <= daysInMonth; i++) {
+        const cell = createDayCell(i, true);
+        grid.appendChild(cell);
+      }
+
+      // Update events
+      document.getElementById('events-today').textContent = `Hoy, ${MONTHS[calMonth].substring(0,3)} ${selectedDay}`;
+      renderEvents(selectedDay);
+    }
+
+    function createDayCell(day, isCurrent) {
+      const cell = document.createElement('button');
+      cell.className = 'w-[14.28%] aspect-square flex flex-col items-center justify-center rounded-xl transition-colors active:scale-95';
+      
+      if (!isCurrent) {
+        cell.className += ' opacity-30';
+      }
+
+      const isSelected = day === selectedDay && isCurrent;
+      if (isSelected) {
+        cell.classList.add('bg-[#a82958]');
+      }
+
+      const text = document.createElement('span');
+      text.className = 'text-base';
+      text.textContent = day;
+      if (isSelected) {
+        text.className += ' text-white font-bold';
+      } else {
+        text.className += ' text-[#1c1c18]';
+      }
+      cell.appendChild(text);
+
+      // Indicator dots
+      if (isCurrent && [2, 7, 16].includes(day)) {
+        const dot = document.createElement('div');
+        dot.className = 'w-1 h-1 rounded-full bg-[#a82958] mt-0.5';
+        cell.appendChild(dot);
+      }
+
+      if (isCurrent) {
+        cell.onclick = () => { selectedDay = day; renderCalendar(); };
+      }
+
+      return cell;
+    }
+
+    function renderEvents(day) {
+      const container = document.getElementById('events-list');
+      container.innerHTML = '';
+      const dayEvents = EVENTS.filter(e => e.day === day);
+      
+      if (dayEvents.length === 0) {
+        container.innerHTML = '<p class="text-sm text-[#807358] text-center py-4">No hay eventos para este día</p>';
+        return;
+      }
+
+      dayEvents.forEach(event => {
+        const colors = { medical: { border: '#006783', badge: 'rgba(0,103,131,0.15)', icon: '👨‍⚕️', label: 'Pediatrician' }, task: { border: '#675b41', badge: 'rgba(103,91,65,0.15)', icon: '🛒', label: 'Supplies' }, milestone: { border: '#a82958', badge: 'rgba(168,41,88,0.15)', icon: '🎂', label: 'Milestone' } };
+        const c = colors[event.type] || colors.task;
+
+        const el = document.createElement('div');
+        el.className = 'flex bg-white/95 rounded-xl p-4 border border-[#8a7176]/12 gap-4 items-start';
+
+        el.innerHTML = `
+          <div class="w-1 h-full rounded self-stretch shrink-0" style="background:${c.border}"></div>
+          <div class="w-[50px] text-right shrink-0 pt-1">
+            <span class="text-sm font-semibold text-[#1c1c18]">${event.time}</span>
+            ${event.period ? `<br><span class="text-[12px] text-[#807358]">${event.period}</span>` : ''}
+          </div>
+          <div class="flex-1">
+            <span class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#1c1c18] bg-[${c.badge}] rounded px-2 py-0.5 mb-2">${c.icon} ${c.label}</span>
+            <p class="text-base font-bold text-[#1c1c18]">${event.title}</p>
+            ${event.location ? `<p class="text-sm text-[#807358] mt-1">📍 ${event.location}</p>` : ''}
+          </div>
+          ${event.type === 'task' ? '<button class="text-xl text-[#8a7176] hover:text-[#a82958] shrink-0"><span class="material-symbols-outlined">check_box_outline_blank</span></button>' : ''}
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    // ==================== INIT ====================
+    // Start at login page
+    navigateTo('login');
+  </script>
+</body>
+</html>

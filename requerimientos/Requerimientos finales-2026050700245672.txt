@@ -1,0 +1,151 @@
+                                        
+Requerimientos ﬁnales
+                                        
+Requerimientos Funcionales (RF)
+ID Nombre Descripción
+RF-01 Registro de Cuenta El sistema debe permitir a la usuaria crear una cuenta 
+nueva ingresando obligatoriamente los siguientes 
+campos: correo electrónico, contraseña, nombre 
+completo y como datos opcionales la fecha de 
+nacimiento, Fecha de Última Regla (FUR) o fecha de 
+nacimiento del bebé.
+RF-02 Autenticación El sistema debe permitir a la usuaria iniciar sesión 
+comparando el correo electrónico y la contraseña 
+ingresados con los registros de la base de datos.
+RF-03 Edición de Perﬁl El sistema debe permitir a la usuaria modiﬁcar la 
+información de su perﬁl en cualquier momento, 
+incluyendo: nombre, edad, semanas/meses de 
+gestación (habilitado únicamente si el perﬁl registra una 
+fecha de última regla)), biografía y selección de un icono 
+de usuario.
+RF-04 Personalización de Interfaz El sistema debe permitir a la usuaria modiﬁcar las 
+preferencias visuales de la aplicación, incluyendo el 
+idioma, el tema visual y la paleta de colores.
+RF-05 Ingreso de Datos 
+Biométricos y Síntomas 
+MaternosEl sistema debe permitir a la usuaria registrar, 
+almacenar y fechar manualmente sus indicadores de 
+salud diarios. La interfaz debe restringir los datos de 
+entrada exclusivamente a los siguientes campos: un 
+campo numérico para el peso materno (kg), un campo 
+numérico para las horas de sueño (horas enteras), 
+campos numéricos para la presión arterial (mmHg), y un 
+tabulador de selección múltiple (checkboxes) restringido 
+a las siguientes opciones: [Fatiga extrema], [Dolor de 
+cabeza], [Hinchazón de pies], [Náuseas/Problemas 
+estomacales], [Ansiedad/Nerviosismo], [Tristeza 
+persistente/Llanto], [Irritabilidad] y [Sentimiento de 
+culpa].
+RF-06 Ingreso de Métricas de 
+Desarrollo y Síntomas El sistema debe permitir a la usuaria registrar, 
+almacenar y fechar manualmente las métricas del bebé, 
+Infantiles adaptando los campos mostrados según la etapa de 
+gestación.
+RF-07 Visualización de Evolución El sistema debe renderizar un gráﬁco bidimensional 
+(líneas o barras) que graﬁque el "peso del bebé o de la 
+madre" (Eje Y) versus el "tiempo en semanas" (Eje X), 
+utilizando los datos históricos del RF-05.
+RF-08 Cálculo Obstétrico y Fecha 
+de PartoEl sistema debe calcular y mostrar automáticamente en 
+pantalla la Fecha Probable de Parto (FPP) sumando 
+exactamente 280 días a la Fecha de Última Regla (FUR) 
+registrada en el perﬁl de la usuaria. Adicionalmente, el 
+sistema debe calcular y desplegar las semanas de 
+gestación actuales basándose en la diferencia entre la 
+fecha actual del sistema y la FUR.
+RF-09 Motor de Alertas Proactivas El sistema debe analizar automáticamente los datos 
+biométricos ingresados y, en caso de superar los 
+umbrales predeﬁnidos (anomalías), generar una alerta 
+visual proactiva sugiriendo buscar atención médica, 
+garantizando la restricción de no emitir diagnósticos 
+médicos. 
+RF-10 Creación de Tareas e Hitos El sistema debe permitir a la usuaria anotar nuevas citas 
+médicas, controles prenatales o tareas personales, 
+requiriendo el ingreso de un título, descripción, fecha y 
+hora especíﬁca.
+RF-11 Actualización de Estado de 
+TareasEl sistema debe permitir a la usuaria modiﬁcar la 
+información de una tarea previamente registrada, así 
+como cambiar su estado a "completada" o eliminarla del 
+registro.
+RF-12 Recordatorios 
+AutomatizadosEl sistema debe enviar notiﬁcaciones (Push) proactivas a 
+la usuaria para recordarle tareas del calendario, 
+controles médicos o registros biométricos pendientes.Condición Pre-parto: El sistema solo debe habilitar 
+un campo numérico para registrar la frecuencia de 
+movimientos fetales diarios.•
+Condición Post-parto: El sistema debe habilitar 
+campos numéricos para el peso del bebé (kg/g), 
+longitud (cm) y frecuencia de alimentación 
+(cantidad de tomas). Además, debe incluir un 
+tabulador de selección múltiple restringido a las 
+siguientes opciones: [Llanto prolongado], [Rechazo 
+de alimento], [Problemas de sueño], 
+[Fiebre/Temperatura anómala] y [Alteraciones en la 
+piel del bebé].•
+RF-13 Interacción con Dr. Manuel El sistema debe permitir a la usuaria interactuar 
+mediante texto natural con el asistente virtual de 
+Inteligencia Artiﬁcial ("Dr. Manuel") para resolver 
+consultas sobre embarazo y primera infancia
+RF-14 Visualización en Calendario El sistema debe renderizar una vista de calendario 
+interactivo mensual y semanal, resaltando gráﬁcamente 
+los días que contienen tareas, citas médicas o hitos de 
+embarazo previamente registrados.
+Requerimientos No Funcionales (RNF)
+ID Nombre Descripción
+RNF-01 Usabilidad del Interfaz La interfaz debe ser intuitiva y accesible, diseñado con 
+botones grandes y tipografía legible, asegurando que el 
+acceso a las funciones principales se realice en un 
+máximo de 3 interacciones (clics).
+RNF-02 Seguridad y Privacidad de 
+Datos en Tránsito y Reposo 
+DescripciónEl sistema debe encriptar todos los datos biométricos y 
+de salud ingresados por la usuaria (peso, presión 
+arterial, síntomas) mediante el estándar AES-256 para su 
+almacenamiento local. Asimismo, toda transm isión de 
+datos hacia la API de "Dr. Manuel" o bases de datos 
+externas debe realizarse obligatoriamente a través del 
+protocolo seguro TLS 1.2 o superior, garantizando la 
+conﬁdencialidad de la información y el cumplimiento 
+estricto de la Ley N° 19.628.
+RNF-03 Disponibilidad Oﬄine El contenido estático de la aplicación, como la guía de 
+primeros pasos, los consejos y alimentos no 
+recomendados, debe guardarse en caché para estar 
+disponible para lectura sin necesidad de conexión a 
+internet.
+RNF-04 Sincronización de Sesión La autenticación de la aplicación nativa debe transferir 
+de forma segura el token de sesión al componente 
+"WebView" y solo se tenga que iniciar sesión en la 
+aplicación.
+RNF-05 Tolerancia a Fallas Si el servidor externo experimenta una caída, la 
+aplicación móvil no debe cerrarse inesperadamente. 
+Debe mostrar un mensaje mostrar el mensaje estático 
+'Servicio temporalmente no disponible y permitir a la 
+usuaria seguir usando las funciones locales.
+RNF-06 Exención de 
+ResponsabilidadEl sistema debe exigir la aceptación explícita de una 
+exención de responsabilidad, indicando que la 
+información entregada es de apoyo y no sustituye la 
+consulta con un profesional de la salud.
+RNF-07 Tiempo de Respuesta de la 
+InterfazLa navegación entre las distintas pantallas nativas de la 
+aplicación debe ejecutarse en menos de 1 segundos.
+RNF-08 Interfaz Responsiva La interfaz gráﬁca debe adaptarse a diferentes tamaños 
+y proporciones de pantalla, garantizando que todos los 
+botones, textos y gráﬁcos sean legibles y adaptables en 
+pantallas desde 4.7 pulgadas hasta 11 pulgadas, sin 
+superposición de elementos.
+RNF-09 Persistencia de Estado en 
+TransiciónEl sistema debe almacenar automáticamente en la 
+memoria caché local del dispositivo todos los datos de 
+entrada no conﬁrmados por la usuaria cuando la 
+aplicación pase a segundo plano (background). Al 
+retornar a primer plano (foreground), el sistema debe 
+restaurar el estado exacto de la interfaz y los datos 
+ingresados en un tiempo máximo de 1.5 segundos, sin 
+requerir un nuevo proceso de autenticación.
+RNF-10 Indicadores de Carga Para consultas que dependan de internet el sistema 
+debe mostrar un indicador visual de carga para que la 
+usuaria sepa que la app sigue procesando.
+                                    
+                        
