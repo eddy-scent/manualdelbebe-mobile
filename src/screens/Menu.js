@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import {
   Baby,
   Calculator,
@@ -14,14 +14,14 @@ import {
   ChevronRight,
 } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
+import Avatar from '../components/Avatar';
 import CalculadoraOvulacion from '../components/CalculadoraOvulacion';
 import CalculadoraEmbarazo from '../components/CalculadoraEmbarazo';
 import DraggableFab from '../components/DraggableFab';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import * as calendarService from '../services/calendarService';
 import { getMonthName } from '../utils/dateUtils';
-import { COLORS } from '../utils/constants';
-
-const ICONO_MAMA = require('../../imagenes/icono.png');
 
 const EventTypeIcon = ({ type, size = 14, color = '#574146' }) => {
   if (type === 'medical') return <Stethoscope size={size} color={color} />;
@@ -30,6 +30,8 @@ const EventTypeIcon = ({ type, size = 14, color = '#574146' }) => {
 };
 
 export default function Menu({ navigation }) {
+  const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const [showOvulacion, setShowOvulacion] = useState(false);
   const [showEmbarazo, setShowEmbarazo] = useState(false);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -65,39 +67,41 @@ export default function Menu({ navigation }) {
     return 'Tarea';
   };
 
+  const fullName = user?.fullName || 'Usuaria';
+
   return (
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
-        <View style={styles.topbar}>
-          <Image source={ICONO_MAMA} style={styles.brandAvatar} />
-          <Text style={styles.brandTitle}>Mi manual del bebé</Text>
+        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
+          <Avatar size={32} />
+          <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
           <View style={styles.topbarActions}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Calendario')}>
-              <Bell size={18} color="#574146" />
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Calendario')}>
+              <Bell size={18} color={colors.textSecondary} />
               {todayEventsCount > 0 && (
-                <View style={styles.badge}>
+                <View style={[styles.badge, { backgroundColor: colors.danger }]}>
                   <Text style={styles.badgeText}>{todayEventsCount}</Text>
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.iconButton}
+            <TouchableOpacity
+              style={[styles.iconButton, { backgroundColor: colors.primaryBg }]}
               onPress={() => navigation.navigate('Configuracion')}
             >
-              <Settings size={18} color="#574146" />
+              <Settings size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Hola, Laura</Text>
-          <Text style={styles.welcomeSubtitle}>Tu peque y tú están haciendo un trabajo increíble.</Text>
+          <Text style={[styles.welcomeTitle, { color: colors.text }]}>Hola, {fullName}</Text>
+          <Text style={[styles.welcomeSubtitle, { color: colors.textSecondary }]}>Tu peque y tú están haciendo un trabajo increíble.</Text>
         </View>
 
         {/* Progress Card */}
-        <View style={styles.progressCard}>
+        <View style={[styles.progressCard, { backgroundColor: colors.primary }]}>
           <View style={styles.progressCardHeader}>
             <View>
               <Text style={styles.progressLabel}>Progreso Actual</Text>
@@ -119,102 +123,102 @@ export default function Menu({ navigation }) {
 
         {/* Calculator Buttons */}
         <View style={styles.calculatorGrid}>
-          <TouchableOpacity style={styles.calculatorButton} onPress={() => setShowOvulacion(true)}>
-            <View style={styles.calculatorIcon}>
-              <Calculator size={20} color="#EB5D8B" />
+          <TouchableOpacity style={[styles.calculatorButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]} onPress={() => setShowOvulacion(true)}>
+            <View style={[styles.calculatorIcon, { backgroundColor: colors.primaryBg }]}>
+              <Calculator size={20} color={colors.primary} />
             </View>
-            <Text style={styles.calculatorText}>Calculadora de Ovulación</Text>
+            <Text style={[styles.calculatorText, { color: colors.text }]}>Calculadora de Ovulación</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.calculatorButton} onPress={() => setShowEmbarazo(true)}>
-            <View style={styles.calculatorIcon}>
-              <Baby size={20} color="#EB5D8B" />
+          <TouchableOpacity style={[styles.calculatorButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]} onPress={() => setShowEmbarazo(true)}>
+            <View style={[styles.calculatorIcon, { backgroundColor: colors.primaryBg }]}>
+              <Baby size={20} color={colors.primary} />
             </View>
-            <Text style={styles.calculatorText}>Calculadora de Embarazo</Text>
+            <Text style={[styles.calculatorText, { color: colors.text }]}>Calculadora de Embarazo</Text>
           </TouchableOpacity>
         </View>
 
         {/* Health Summary Cards */}
         <View style={styles.healthCardsContainer}>
-          <View style={styles.healthCard}>
+          <View style={[styles.healthCard, { backgroundColor: colors.card, borderTopColor: colors.accent }]}>
             <View style={styles.healthCardHeader}>
               <View style={{ marginRight: 12 }}>
-                <Ruler size={24} color="#1c1c18" />
+                <Ruler size={24} color={colors.text} />
               </View>
-              <Text style={styles.healthCardTitle}>Mi Bebé</Text>
+              <Text style={[styles.healthCardTitle, { color: colors.text }]}>Mi Bebé</Text>
             </View>
             <View style={styles.healthCardStats}>
-              <View style={styles.healthStatBox}>
-                <Text style={styles.healthStatLabel}>Tamaño est.</Text>
-                <Text style={styles.healthStatValue}>30 cm</Text>
-                <Text style={styles.healthStatSubtext}>Como una mazorca</Text>
+              <View style={[styles.healthStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                <Text style={[styles.healthStatLabel, { color: colors.textSecondary }]}>Tamaño est.</Text>
+                <Text style={[styles.healthStatValue, { color: colors.text }]}>30 cm</Text>
+                <Text style={[styles.healthStatSubtext, { color: colors.textSecondary }]}>Como una mazorca</Text>
               </View>
-              <View style={styles.healthStatBox}>
-                <Text style={styles.healthStatLabel}>Peso est.</Text>
-                <Text style={styles.healthStatValue}>600 g</Text>
+              <View style={[styles.healthStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                <Text style={[styles.healthStatLabel, { color: colors.textSecondary }]}>Peso est.</Text>
+                <Text style={[styles.healthStatValue, { color: colors.text }]}>600 g</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.healthCardButton}>
-              <Text style={styles.healthCardButtonText}>Ver desarrollo detallado</Text>
-              <ChevronRight size={16} color="#6EC1E4" />
+              <Text style={[styles.healthCardButtonText, { color: colors.accent }]}>Ver desarrollo detallado</Text>
+              <ChevronRight size={16} color={colors.accent} />
             </TouchableOpacity>
           </View>
 
-          <View style={styles.healthCard}>
+          <View style={[styles.healthCard, { backgroundColor: colors.card, borderTopColor: colors.accent }]}>
             <View style={styles.healthCardHeader}>
               <View style={{ marginRight: 12 }}>
-                <Scale size={24} color="#1c1c18" />
+                <Scale size={24} color={colors.text} />
               </View>
-              <Text style={styles.healthCardTitle}>Mi Salud</Text>
+              <Text style={[styles.healthCardTitle, { color: colors.text }]}>Mi Salud</Text>
             </View>
             <View style={styles.healthCardStats}>
-              <View style={styles.healthStatBox}>
-                <Text style={styles.healthStatLabel}>Peso actual</Text>
-                <Text style={styles.healthStatValue}>68.5 kg</Text>
-                <Text style={styles.healthStatSubtextPositive}>+4.5 kg total</Text>
+              <View style={[styles.healthStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                <Text style={[styles.healthStatLabel, { color: colors.textSecondary }]}>Peso actual</Text>
+                <Text style={[styles.healthStatValue, { color: colors.text }]}>68.5 kg</Text>
+                <Text style={[styles.healthStatSubtextPositive, { color: colors.primary }]}>+4.5 kg total</Text>
               </View>
-              <View style={styles.healthStatBox}>
-                <Text style={styles.healthStatLabel}>Presión arte.</Text>
-                <Text style={styles.healthStatValue}>110/70</Text>
-                <Text style={styles.healthStatSubtextNormal}>Normal</Text>
+              <View style={[styles.healthStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                <Text style={[styles.healthStatLabel, { color: colors.textSecondary }]}>Presión arte.</Text>
+                <Text style={[styles.healthStatValue, { color: colors.text }]}>110/70</Text>
+                <Text style={[styles.healthStatSubtextNormal, { color: colors.textTertiary }]}>Normal</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.healthCardButton}>
-              <Text style={styles.healthCardButtonText}>Actualizar métricas</Text>
-              <ChevronRight size={16} color="#6EC1E4" />
+              <Text style={[styles.healthCardButtonText, { color: colors.accent }]}>Actualizar métricas</Text>
+              <ChevronRight size={16} color={colors.accent} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Upcoming Events — only shows future events */}
+        {/* Upcoming Events */}
         {upcomingEvents.length > 0 && (
           <View style={styles.appointmentSection}>
-            <Text style={styles.sectionTitle}>Próximos Eventos</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Próximos Eventos</Text>
             {upcomingEvents.map((event) => {
               const parts = event.date.split('-');
               const eventDate = new Date(+parts[0], +parts[1] - 1, +parts[2]);
               const monthShort = getMonthName(eventDate.getMonth()).substring(0, 3);
               const day = eventDate.getDate();
               return (
-                <View key={event.id} style={styles.appointmentCard}>
-                  <View style={[styles.appointmentDate, event.type === 'medical' && styles.appointmentDateMedical]}>
-                    <Text style={styles.appointmentMonth}>{monthShort}</Text>
-                    <Text style={styles.appointmentDay}>{day}</Text>
+                <View key={event.id} style={[styles.appointmentCard, { backgroundColor: colors.card }]}>
+                  <View style={[styles.appointmentDate, { backgroundColor: isDark ? colors.surfaceAlt : '#f2e1c0' }, event.type === 'medical' && { backgroundColor: isDark ? colors.accentBg : '#d4edf7' }]}>
+                    <Text style={[styles.appointmentMonth, { color: colors.text }]}>{monthShort}</Text>
+                    <Text style={[styles.appointmentDay, { color: colors.text }]}>{day}</Text>
                   </View>
                   <View style={styles.appointmentDetails}>
-                    <Text style={styles.appointmentTitle}>{event.title}</Text>
+                    <Text style={[styles.appointmentTitle, { color: colors.text }]}>{event.title}</Text>
                     {event.time ? (
                       <View style={styles.appointmentTime}>
                         <View style={{ marginRight: 4 }}>
-                          <Clock size={14} color="#574146" />
+                          <Clock size={14} color={colors.textSecondary} />
                         </View>
-                        <Text style={styles.appointmentTimeText}>{event.time}{event.period ? ` ${event.period}` : ''}</Text>
+                        <Text style={[styles.appointmentTimeText, { color: colors.textSecondary }]}>{event.time}{event.period ? ` ${event.period}` : ''}</Text>
                       </View>
                     ) : (
                       <View style={styles.appointmentTime}>
                         <View style={{ marginRight: 4 }}>
-                          <EventTypeIcon type={event.type} size={14} color="#574146" />
+                          <EventTypeIcon type={event.type} size={14} color={colors.textSecondary} />
                         </View>
-                        <Text style={styles.appointmentTimeText}>{getEventBadge(event.type)}</Text>
+                        <Text style={[styles.appointmentTimeText, { color: colors.textSecondary }]}>{getEventBadge(event.type)}</Text>
                       </View>
                     )}
                   </View>
@@ -249,24 +253,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f1eee8',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,115,88,0.1)',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 20,
     marginBottom: 20,
   },
-  brandAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    resizeMode: 'cover',
-    backgroundColor: '#EB5D8B',
-  },
   brandTitle: {
     fontSize: 20,
-    color: '#eb5d8b',
     fontWeight: '700',
     flex: 1,
     marginLeft: 12,
@@ -279,12 +273,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(235,93,139,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 18,
   },
   welcomeSection: {
     marginBottom: 20,
@@ -292,16 +282,13 @@ const styles = StyleSheet.create({
   welcomeTitle: {
     fontSize: 32,
     fontWeight: '600',
-    color: '#1c1c18',
     marginBottom: 8,
   },
   welcomeSubtitle: {
     fontSize: 16,
-    color: '#574146',
     lineHeight: 24,
   },
   progressCard: {
-    backgroundColor: '#EB5D8B',
     borderRadius: 24,
     padding: 20,
     marginBottom: 20,
@@ -345,9 +332,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.3)',
   },
-  progressIcon: {
-    fontSize: 40,
-  },
   progressBarBackground: {
     height: 12,
     backgroundColor: 'rgba(255,255,255,0.2)',
@@ -376,29 +360,22 @@ const styles = StyleSheet.create({
   },
   calculatorButton: {
     flex: 1,
-    backgroundColor: '#f0eee8',
     borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(221,191,197,0.3)',
   },
   calculatorIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(235,93,139,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
   },
-  calculatorIconText: {
-    fontSize: 20,
-  },
   calculatorText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1c1c18',
     textAlign: 'center',
   },
   healthCardsContainer: {
@@ -406,11 +383,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   healthCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     borderTopWidth: 3,
-    borderTopColor: '#B4E4F5',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
@@ -422,14 +397,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  healthCardIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
   healthCardTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1c1c18',
   },
   healthCardStats: {
     flexDirection: 'row',
@@ -437,7 +407,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   healthStatBox: {
-    backgroundColor: '#f0eee8',
     borderRadius: 8,
     padding: 12,
     flex: 1,
@@ -445,26 +414,21 @@ const styles = StyleSheet.create({
   },
   healthStatLabel: {
     fontSize: 12,
-    color: '#574146',
     marginBottom: 4,
   },
   healthStatValue: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1c1c18',
     marginBottom: 4,
   },
   healthStatSubtext: {
     fontSize: 10,
-    color: '#574146',
   },
   healthStatSubtextPositive: {
     fontSize: 10,
-    color: '#EB5D8B',
   },
   healthStatSubtextNormal: {
     fontSize: 10,
-    color: '#675b41',
   },
   healthCardButton: {
     flexDirection: 'row',
@@ -475,20 +439,16 @@ const styles = StyleSheet.create({
   healthCardButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6EC1E4',
   },
-  
   appointmentSection: {
     marginBottom: 20,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#1c1c18',
     marginBottom: 12,
   },
   appointmentCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -501,7 +461,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   appointmentDate: {
-    backgroundColor: '#f2e1c0',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -509,19 +468,14 @@ const styles = StyleSheet.create({
     height: 64,
     marginRight: 16,
   },
-  appointmentDateMedical: {
-    backgroundColor: '#d4edf7',
-  },
   appointmentMonth: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#231a07',
     textTransform: 'uppercase',
   },
   appointmentDay: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#231a07',
   },
   appointmentDetails: {
     flex: 1,
@@ -529,34 +483,19 @@ const styles = StyleSheet.create({
   appointmentTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1c1c18',
     marginBottom: 4,
   },
   appointmentTime: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  timeIcon: {
-    fontSize: 14,
-    marginRight: 4,
-  },
   appointmentTimeText: {
     fontSize: 12,
-    color: '#574146',
-  },
-  appointmentMenu: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0eee8',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   badge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: COLORS.danger,
     borderRadius: 10,
     minWidth: 18,
     height: 18,

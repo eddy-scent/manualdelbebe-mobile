@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Bell, Settings, Trash2, Clock, Stethoscope, Star, ClipboardList, Cake, ChevronLeft, ChevronRight, Plus, Edit3 } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
+import Avatar from '../components/Avatar';
 import EventForm from '../components/EventForm';
+import { useTheme } from '../context/ThemeContext';
 import * as calendarService from '../services/calendarService';
 import { getMonthName, formatYYYYMMDD } from '../services/dateService';
-import { COLORS } from '../utils/constants';
-
-const ICONO_MAMA = require('../../imagenes/icono.png');
 
 const EventTypeIcon = ({ type, size = 14, color = '#1c1c18' }) => {
   if (type === 'medical') return <Stethoscope size={size} color={color} />;
@@ -16,21 +15,8 @@ const EventTypeIcon = ({ type, size = 14, color = '#1c1c18' }) => {
   return <ClipboardList size={size} color={color} />;
 };
 
-const TYPE_COLORS = {
-  medical: COLORS.accent,
-  birthday: COLORS.primary,
-  milestone: '#675b41',
-  task: '#807358',
-};
-
-const TYPE_LABELS = {
-  medical: 'Cita médica',
-  birthday: 'Cumpleaños',
-  milestone: 'Hito importante',
-  task: 'Tarea',
-};
-
 export default function Calendario({ navigation }) {
+  const { colors, isDark } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date().getDate());
   const [events, setEvents] = useState([]);
@@ -134,31 +120,45 @@ export default function Calendario({ navigation }) {
   const selectedDateStr = formatYYYYMMDD(new Date(currentYear, currentMonthIndex, selectedDate));
   const selectedEvents = events.filter((e) => e.date === selectedDateStr);
 
+  const TYPE_COLORS = {
+    medical: colors.accent,
+    birthday: colors.primary,
+    milestone: colors.textTertiary,
+    task: colors.textTertiary,
+  };
+
+  const TYPE_LABELS = {
+    medical: 'Cita médica',
+    birthday: 'Cumpleaños',
+    milestone: 'Hito importante',
+    task: 'Tarea',
+  };
+
   return (
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
-        <View style={styles.topbar}>
-          <Image source={ICONO_MAMA} style={styles.brandAvatar} />
-          <Text style={styles.brandTitle}>Mi manual del bebé</Text>
+        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
+          <Avatar size={36} />
+          <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
           <View style={styles.topbarActions}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Calendario')}>
-              <Bell size={18} color="#574146" />
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Calendario')}>
+              <Bell size={18} color={colors.textSecondary} />
               {todayEvents.length > 0 && (
-                <View style={styles.badge}>
+                <View style={[styles.badge, { backgroundColor: colors.danger }]}>
                   <Text style={styles.badgeText}>{todayEvents.length}</Text>
                 </View>
               )}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Configuracion')}>
-              <Settings size={18} color="#574146" />
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Configuracion')}>
+              <Settings size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Today's alerts */}
         {todayEvents.length > 0 && (
-          <View style={styles.alertSection}>
+          <View style={[styles.alertSection, { backgroundColor: colors.primary }]}>
             <View style={styles.alertHeader}>
               <Bell size={16} color="#ffffff" />
               <Text style={styles.alertTitle}>Hoy tenés {todayEvents.length} {todayEvents.length === 1 ? 'evento' : 'eventos'}</Text>
@@ -175,7 +175,7 @@ export default function Calendario({ navigation }) {
                     <Text style={styles.alertItemTitle}>{event.title}</Text>
                     {event.time && (
                       <View style={styles.alertTimeRow}>
-                        <Clock size={12} color="#574146" />
+                        <Clock size={12} color="rgba(255,255,255,0.7)" />
                         <Text style={styles.alertTimeText}>{event.time}{event.period ? ` ${event.period}` : ''}</Text>
                       </View>
                     )}
@@ -189,53 +189,54 @@ export default function Calendario({ navigation }) {
         {/* Calendar Header */}
         <View style={styles.calendarHeader}>
           <View>
-            <Text style={styles.monthTitle}>{currentMonth}</Text>
-            <Text style={styles.yearText}>{currentYear}</Text>
+            <Text style={[styles.monthTitle, { color: colors.text }]}>{currentMonth}</Text>
+            <Text style={[styles.yearText, { color: colors.textTertiary }]}>{currentYear}</Text>
           </View>
-          <View style={styles.navButtons}>
+          <View style={[styles.navButtons, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <TouchableOpacity style={styles.navButton} onPress={goToPrevMonth}>
-              <ChevronLeft size={18} color="#807358" />
+              <ChevronLeft size={18} color={colors.textTertiary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.navButton} onPress={goToNextMonth}>
-              <ChevronRight size={18} color="#807358" />
+              <ChevronRight size={18} color={colors.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Calendar Grid */}
-        <View style={styles.calendarContainer}>
+        <View style={[styles.calendarContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <View style={styles.weekDaysRow}>
             {['D', 'L', 'M', 'X', 'J', 'V', 'S'].map((day, index) => (
-              <Text key={index} style={styles.weekDayText}>{day}</Text>
+              <Text key={index} style={[styles.weekDayText, { color: isDark ? colors.textTertiary : 'rgba(128,115,88,0.5)' }]}>{day}</Text>
             ))}
           </View>
 
           <View style={styles.daysGrid}>
             {daysInMonth().map((item, index) => {
               const hasEvent = dayHasEvent(item);
-              const today = isToday(item);
+              const todayCheck = isToday(item);
               const isSelected = selectedDate === item.day && item.isCurrentMonth;
               return (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.dayCell,
-                    isSelected && styles.selectedDay,
-                    today && styles.todayDay,
+                    isSelected && { backgroundColor: colors.primary },
+                    todayCheck && !isSelected && { backgroundColor: colors.surfaceAlt, borderWidth: 2, borderColor: colors.primary },
                   ]}
                   onPress={() => item.isCurrentMonth && setSelectedDate(item.day)}
                 >
                   <Text
                     style={[
                       styles.dayText,
-                      !item.isCurrentMonth && styles.dayTextInactive,
-                      isSelected && styles.selectedDayText,
-                      today && !isSelected && styles.todayDayText,
+                      { color: colors.text },
+                      !item.isCurrentMonth && { color: isDark ? 'rgba(240,238,232,0.2)' : 'rgba(28,28,24,0.3)' },
+                      isSelected && { color: '#ffffff', fontWeight: '700' },
+                      todayCheck && !isSelected && { fontWeight: '700', color: colors.primary },
                     ]}
                   >
                     {item.day}
                   </Text>
-                  {hasEvent && <View style={[styles.indicator, today && styles.indicatorToday]} />}
+                  {hasEvent && <View style={[styles.indicator, { backgroundColor: isSelected ? '#ffffff' : colors.primary }]} />}
                 </TouchableOpacity>
               );
             })}
@@ -245,43 +246,43 @@ export default function Calendario({ navigation }) {
         {/* Selected Day Events */}
         <View style={styles.eventsSection}>
           <View style={styles.eventsHeader}>
-            <Text style={styles.eventsTitle}>
+            <Text style={[styles.eventsTitle, { color: colors.text }]}>
               {selectedDate} de {currentMonth}
             </Text>
-            <TouchableOpacity style={styles.addButton} onPress={() => { setEditingEvent(null); setShowForm(true); }}>
+            <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => { setEditingEvent(null); setShowForm(true); }}>
               <Plus size={18} color="#ffffff" />
               <Text style={styles.addButtonText}>Evento</Text>
             </TouchableOpacity>
           </View>
 
           {selectedEvents.length === 0 && (
-            <Text style={styles.noEventsText}>No hay eventos para este día.</Text>
+            <Text style={[styles.noEventsText, { color: colors.textSecondary }]}>No hay eventos para este día.</Text>
           )}
 
           {selectedEvents.map((event) => {
             const typeColor = TYPE_COLORS[event.type] || TYPE_COLORS.task;
             return (
-              <View key={event.id} style={[styles.eventItem, { borderLeftColor: typeColor }]}>
+              <View key={event.id} style={[styles.eventItem, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderLeftColor: typeColor }]}>
                 <View style={styles.eventContent}>
                   <View style={[styles.eventBadge, { backgroundColor: `${typeColor}26` }]}>
                     <EventTypeIcon type={event.type} size={14} color={typeColor} />
-                    <Text style={[styles.badgeText, { color: typeColor }]}>{TYPE_LABELS[event.type] || 'Tarea'}</Text>
+                    <Text style={[styles.eventBadgeText, { color: typeColor }]}>{TYPE_LABELS[event.type] || 'Tarea'}</Text>
                   </View>
-                  <Text style={styles.eventItemTitle}>{event.title}</Text>
+                  <Text style={[styles.eventItemTitle, { color: colors.text }]}>{event.title}</Text>
                   {event.time && (
                     <View style={styles.eventTimeRow}>
-                      <Clock size={13} color="#574146" />
-                      <Text style={styles.eventTimeText}>{event.time}{event.period ? ` ${event.period}` : ''}</Text>
+                      <Clock size={13} color={colors.textSecondary} />
+                      <Text style={[styles.eventTimeText, { color: colors.textSecondary }]}>{event.time}{event.period ? ` ${event.period}` : ''}</Text>
                     </View>
                   )}
-                  {event.description ? <Text style={styles.eventDesc}>{event.description}</Text> : null}
+                  {event.description ? <Text style={[styles.eventDesc, { color: colors.textTertiary }]}>{event.description}</Text> : null}
                 </View>
                 <View style={styles.eventActions}>
-                  <TouchableOpacity style={styles.editButton} onPress={() => handleEditEvent(event)}>
-                    <Edit3 size={16} color={COLORS.accent} />
+                  <TouchableOpacity style={[styles.editButton, { backgroundColor: colors.accentBg }]} onPress={() => handleEditEvent(event)}>
+                    <Edit3 size={16} color={colors.accent} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteEvent(event.id)}>
-                    <Trash2 size={16} color={COLORS.danger} />
+                  <TouchableOpacity style={[styles.deleteButton, { backgroundColor: colors.dangerBg }]} onPress={() => handleDeleteEvent(event.id)}>
+                    <Trash2 size={16} color={colors.danger} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -310,23 +311,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f1eee8',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,115,88,0.12)',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 20,
     marginBottom: 20,
   },
-  brandAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    resizeMode: 'cover',
-  },
   brandTitle: {
     fontSize: 18,
-    color: COLORS.primary,
     fontWeight: '700',
     flex: 1,
     marginLeft: 12,
@@ -339,7 +331,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 16,
-    backgroundColor: COLORS.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -347,7 +338,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: COLORS.danger,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -359,9 +349,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
   },
-  // Alert section for today
   alertSection: {
-    backgroundColor: COLORS.primary,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -418,7 +406,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
   },
-  // Calendar
   calendarHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -428,21 +415,17 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#1c1c18',
   },
   yearText: {
     fontSize: 14,
-    color: '#807358',
     marginTop: 4,
   },
   navButtons: {
     flexDirection: 'row',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 20,
     padding: 4,
     borderWidth: 1,
-    borderColor: 'rgba(128,115,88,0.12)',
   },
   navButton: {
     width: 40,
@@ -452,12 +435,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   calendarContainer: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 24,
     padding: 20,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(138,113,118,0.12)',
   },
   weekDaysRow: {
     flexDirection: 'row',
@@ -467,7 +448,6 @@ const styles = StyleSheet.create({
   weekDayText: {
     fontSize: 12,
     fontWeight: '500',
-    color: 'rgba(128,115,88,0.5)',
     width: '14.28%',
     textAlign: 'center',
   },
@@ -486,38 +466,13 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 16,
-    color: '#1c1c18',
-  },
-  dayTextInactive: {
-    color: 'rgba(28,28,24,0.3)',
-  },
-  selectedDay: {
-    backgroundColor: COLORS.primary,
-  },
-  selectedDayText: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  todayDay: {
-    backgroundColor: '#f0eee8',
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-  },
-  todayDayText: {
-    fontWeight: '700',
-    color: COLORS.primary,
   },
   indicator: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.primary,
     marginTop: 2,
   },
-  indicatorToday: {
-    backgroundColor: '#ffffff',
-  },
-  // Events section
   eventsSection: {
     marginBottom: 20,
   },
@@ -530,17 +485,15 @@ const styles = StyleSheet.create({
   eventsTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1c1c18',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: COLORS.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    shadowColor: COLORS.primary,
+    shadowColor: '#EB5D8B',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -553,19 +506,16 @@ const styles = StyleSheet.create({
   },
   noEventsText: {
     fontSize: 14,
-    color: '#574146',
     textAlign: 'center',
     marginVertical: 12,
   },
   eventItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'rgba(138,113,118,0.12)',
     borderLeftWidth: 3,
   },
   eventContent: {
@@ -581,10 +531,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginBottom: 6,
   },
+  eventBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
   eventItemTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1c1c18',
   },
   eventTimeRow: {
     flexDirection: 'row',
@@ -594,11 +547,9 @@ const styles = StyleSheet.create({
   },
   eventTimeText: {
     fontSize: 13,
-    color: '#574146',
   },
   eventDesc: {
     fontSize: 13,
-    color: '#807358',
     marginTop: 4,
   },
   eventActions: {
@@ -609,7 +560,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(110,193,228,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -617,7 +567,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,107,107,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },

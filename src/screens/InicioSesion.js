@@ -12,10 +12,11 @@ import {
 } from 'react-native';
 import { Heart, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function InicioSesion({ navigation }) {
   const { login } = useAuth();
+  const { colors, isDark } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -46,71 +47,71 @@ export default function InicioSesion({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" backgroundColor="#fcf9f3" />
-      <View style={styles.backgroundGlowOne} />
-      <View style={styles.backgroundGlowTwo} />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.surface }]}>
+      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
+      <View style={[styles.backgroundGlowOne, { backgroundColor: isDark ? 'rgba(235,93,139,0.15)' : 'rgba(242,160,190,0.35)' }]} />
+      <View style={[styles.backgroundGlowTwo, { backgroundColor: isDark ? 'rgba(110,193,228,0.1)' : 'rgba(180,228,245,0.28)' }]} />
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: isDark ? colors.card : 'rgba(252,249,243,0.95)', borderColor: isDark ? colors.cardBorder : 'rgba(255,255,255,0.6)', shadowColor: colors.primary }]}>
           <View style={styles.header}>
-            <View style={styles.logoCircle}>
-              <Heart size={32} color={COLORS.primary} />
+            <View style={[styles.logoCircle, { backgroundColor: colors.primaryLight }]}>
+              <Heart size={32} color={colors.primary} />
             </View>
             <View style={styles.titleGroup}>
-              <Text style={styles.title}>Mi manual del bebé</Text>
-              <Text style={styles.subtitle}>Bienvenida a tu espacio seguro</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Mi manual del bebé</Text>
+              <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Bienvenida a tu espacio seguro</Text>
             </View>
           </View>
 
           {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{error}</Text>
+            <View style={[styles.errorBox, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
+              <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
             </View>
           ) : null}
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Correo electrónico</Text>
-            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Correo electrónico</Text>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? colors.surfaceAlt : '#ffffff', borderColor: isDark ? colors.inputBorder : '#e5e2dc' }]}>
               <View style={{ marginRight: 12 }}>
-                <Mail size={18} color="#574146" />
+                <Mail size={18} color={colors.textSecondary} />
               </View>
               <TextInput
                 value={email}
                 onChangeText={(text) => { setEmail(text); setError(''); }}
                 placeholder="tu@email.com"
-                placeholderTextColor="#8a7176"
+                placeholderTextColor={colors.textTertiary}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
               />
             </View>
           </View>
 
           <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Contraseña</Text>
+            <View style={[styles.inputContainer, { backgroundColor: isDark ? colors.surfaceAlt : '#ffffff', borderColor: isDark ? colors.inputBorder : '#e5e2dc' }]}>
               <View style={{ marginRight: 12 }}>
-                <Lock size={18} color="#574146" />
+                <Lock size={18} color={colors.textSecondary} />
               </View>
               <TextInput
                 value={password}
                 onChangeText={(text) => { setPassword(text); setError(''); }}
                 placeholder="••••••••"
-                placeholderTextColor="#8a7176"
+                placeholderTextColor={colors.textTertiary}
                 secureTextEntry={!showPassword}
-                style={styles.input}
+                style={[styles.input, { color: colors.text }]}
               />
               <TouchableOpacity
                 style={styles.toggleButton}
                 onPress={() => setShowPassword((prev) => !prev)}
               >
-                {showPassword ? <Eye size={18} color="#574146" /> : <EyeOff size={18} color="#574146" />}
+                {showPassword ? <Eye size={18} color={colors.textSecondary} /> : <EyeOff size={18} color={colors.textSecondary} />}
               </TouchableOpacity>
             </View>
           </View>
 
           <TouchableOpacity
-            style={styles.primaryButton}
+            style={[styles.primaryButton, { backgroundColor: colors.primary }]}
             activeOpacity={0.85}
             onPress={handleLogin}
             disabled={loading}
@@ -125,10 +126,10 @@ export default function InicioSesion({ navigation }) {
             )}
           </TouchableOpacity>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>¿No tienes una cuenta?</Text>
+          <View style={[styles.footer, { borderTopColor: isDark ? colors.cardBorder : 'rgba(229,226,220,0.5)' }]}>
+            <Text style={[styles.footerText, { color: colors.textSecondary }]}>¿No tienes una cuenta?</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Registro')}>
-              <Text style={styles.createAccount}>Crear cuenta</Text>
+              <Text style={[styles.createAccount, { color: colors.accent }]}>Crear cuenta</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -140,7 +141,6 @@ export default function InicioSesion({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fcf9f3',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -155,7 +155,6 @@ const styles = StyleSheet.create({
     left: '-10%',
     top: '-15%',
     borderRadius: 999,
-    backgroundColor: 'rgba(242,160,190,0.35)',
   },
   backgroundGlowTwo: {
     position: 'absolute',
@@ -164,15 +163,11 @@ const styles = StyleSheet.create({
     right: '-10%',
     bottom: '-20%',
     borderRadius: 999,
-    backgroundColor: 'rgba(180,228,245,0.28)',
   },
   card: {
-    backgroundColor: 'rgba(252,249,243,0.95)',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.6)',
     padding: 28,
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
     shadowRadius: 32,
@@ -186,7 +181,6 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 24,
-    backgroundColor: COLORS.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -200,27 +194,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    color: COLORS.text,
     fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
   },
   subtitle: {
-    color: COLORS.textSecondary,
     fontSize: 16,
     marginTop: 8,
     textAlign: 'center',
   },
   errorBox: {
-    backgroundColor: COLORS.dangerBg,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.danger,
   },
   errorText: {
-    color: COLORS.danger,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -228,7 +217,6 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   label: {
-    color: COLORS.textSecondary,
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
@@ -236,16 +224,13 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#e5e2dc',
     paddingHorizontal: 16,
   },
   input: {
     flex: 1,
     height: 52,
-    color: COLORS.text,
     fontSize: 16,
   },
   toggleButton: {
@@ -253,14 +238,12 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginTop: 4,
-    backgroundColor: COLORS.primary,
     borderRadius: 20,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: 8,
-    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 24,
@@ -275,17 +258,14 @@ const styles = StyleSheet.create({
     marginTop: 22,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(229,226,220,0.5)',
     flexDirection: 'row',
     justifyContent: 'center',
     flexWrap: 'wrap',
   },
   footerText: {
-    color: COLORS.textSecondary,
     fontSize: 16,
   },
   createAccount: {
-    color: COLORS.accent,
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 4,

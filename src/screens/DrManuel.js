@@ -1,28 +1,29 @@
 // ──────────────────────────────────────────────────────────
 // Pantalla Dr. Manuel — RF-13
-// Placeholder con estructura lista para integrar iframe.
-// El FAB de Menu navega aquí cuando se implemente el chat.
+// Placeholder con estructura lista para integrar chat.
 // ──────────────────────────────────────────────────────────
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { MessageCircle, ExternalLink, Shield, ArrowLeft } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
-import { COLORS } from '../utils/constants';
+import { useTheme } from '../context/ThemeContext';
 
 export default function DrManuel({ navigation }) {
+  const { colors, isDark } = useTheme();
+
   return (
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
-        <View style={styles.topbar}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <ArrowLeft size={20} color="#574146" />
+        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={20} color={colors.textSecondary} />
           </TouchableOpacity>
-          <Text style={styles.topbarTitle}>Dr. Manuel</Text>
+          <Text style={[styles.topbarTitle, { color: colors.primary }]}>Dr. Manuel</Text>
           <View style={styles.topbarSpacer} />
         </View>
 
         {/* Hero */}
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
           <View style={styles.heroIconCircle}>
             <MessageCircle size={48} color="#ffffff" />
           </View>
@@ -34,12 +35,12 @@ export default function DrManuel({ navigation }) {
         </View>
 
         {/* Próximamente */}
-        <View style={styles.comingSoonCard}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>Próximamente</Text>
+        <View style={[styles.comingSoonCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <View style={[styles.badge, { backgroundColor: colors.primaryBgStrong }]}>
+            <Text style={[styles.badgeText, { color: colors.primary }]}>Próximamente</Text>
           </View>
-          <Text style={styles.comingSoonTitle}>Estamos preparando el chat</Text>
-          <Text style={styles.comingSoonDesc}>
+          <Text style={[styles.comingSoonTitle, { color: colors.text }]}>Estamos preparando el chat</Text>
+          <Text style={[styles.comingSoonDesc, { color: colors.textSecondary }]}>
             Pronto podrás hacerle consultas a Dr. Manuel directamente desde aquí.
             El asistente está diseñado para responder tus dudas sobre embarazo
             y primera infancia, sin sustituir la consulta médica.
@@ -48,37 +49,37 @@ export default function DrManuel({ navigation }) {
 
         {/* Info Cards */}
         <View style={styles.infoContainer}>
-          <View style={styles.infoCard}>
-            <View style={styles.infoIconCircle}>
-              <MessageCircle size={20} color={COLORS.primary} />
+          <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={[styles.infoIconCircle, { backgroundColor: colors.primaryBg }]}>
+              <MessageCircle size={20} color={colors.primary} />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Consultas en lenguaje natural</Text>
-              <Text style={styles.infoDesc}>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>Consultas en lenguaje natural</Text>
+              <Text style={[styles.infoDesc, { color: colors.textSecondary }]}>
                 Escribí tus dudas de forma simple y Dr. Manuel te orientará.
               </Text>
             </View>
           </View>
 
-          <View style={styles.infoCard}>
-            <View style={styles.infoIconCircle}>
-              <ExternalLink size={20} color={COLORS.primary} />
+          <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={[styles.infoIconCircle, { backgroundColor: colors.primaryBg }]}>
+              <ExternalLink size={20} color={colors.primary} />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Integración con tus datos</Text>
-              <Text style={styles.infoDesc}>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>Integración con tus datos</Text>
+              <Text style={[styles.infoDesc, { color: colors.textSecondary }]}>
                 Dr. Manuel podrá ver tus métricas para darte respuestas más personalizadas.
               </Text>
             </View>
           </View>
 
-          <View style={styles.infoCard}>
-            <View style={styles.infoIconCircle}>
-              <Shield size={20} color={COLORS.primary} />
+          <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={[styles.infoIconCircle, { backgroundColor: colors.primaryBg }]}>
+              <Shield size={20} color={colors.primary} />
             </View>
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>No reemplaza al médico</Text>
-              <Text style={styles.infoDesc}>
+              <Text style={[styles.infoTitle, { color: colors.text }]}>No reemplaza al médico</Text>
+              <Text style={[styles.infoDesc, { color: colors.textSecondary }]}>
                 La información es de apoyo y no sustituye la consulta con un profesional de la salud.
               </Text>
             </View>
@@ -99,9 +100,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f1eee8',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,115,88,0.12)',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 20,
@@ -111,13 +110,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(235,93,139,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   topbarTitle: {
     fontSize: 18,
-    color: COLORS.primary,
     fontWeight: '700',
   },
   topbarSpacer: {
@@ -125,7 +122,6 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
     borderRadius: 24,
     padding: 32,
     marginBottom: 20,
@@ -152,35 +148,29 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   comingSoonCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 20,
     padding: 24,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
     alignItems: 'center',
   },
   badge: {
-    backgroundColor: COLORS.primaryBgStrong,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 999,
     marginBottom: 12,
   },
   badgeText: {
-    color: COLORS.primary,
     fontWeight: '700',
     fontSize: 13,
   },
   comingSoonTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.text,
     marginBottom: 8,
   },
   comingSoonDesc: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -190,17 +180,14 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
   },
   infoIconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -211,12 +198,10 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.text,
     marginBottom: 4,
   },
   infoDesc: {
     fontSize: 13,
-    color: COLORS.textSecondary,
     lineHeight: 18,
   },
 });

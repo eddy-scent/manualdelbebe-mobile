@@ -90,3 +90,31 @@ export const MOVIMIENTOS_FETALES = [
   'Cambio de intensidad',
   'Sin movimiento fetal',
 ];
+
+// ─── Paleta de colores para tema oscuro ─────────────────
+export const DARK_COLORS = {
+  primary: '#EB5D8B',
+  primaryLight: '#3d2030',
+  primaryShadow: 'rgba(235,93,139,0.4)',
+  primaryBg: 'rgba(235,93,139,0.15)',
+  primaryBgStrong: 'rgba(235,93,139,0.2)',
+
+  accent: '#6EC1E4',
+  accentLight: '#1a2e3a',
+  accentBg: 'rgba(110,193,228,0.2)',
+
+  surface: '#1a1a2e',
+  surfaceAlt: '#22223a',
+  card: '#252542',
+  cardBorder: 'rgba(255,255,255,0.08)',
+
+  text: '#f0eee8',
+  textSecondary: '#b8a9ae',
+  textTertiary: '#8a7d82',
+
+  danger: '#ff6b6b',
+  dangerBg: 'rgba(255,107,107,0.15)',
+
+  inputBorder: 'rgba(255,255,255,0.08)',
+  inputBorderFocused: 'rgba(255,255,255,0.15)',
+};

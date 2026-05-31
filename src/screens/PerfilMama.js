@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   Alert,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -10,19 +9,18 @@ import {
   View,
 } from 'react-native';
 import { Bell, Settings, Check } from 'lucide-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScreenLayout from '../components/ScreenLayout';
+import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
-import { getTodayString } from '../services/dateService';
-import { formatDDMMYYYY } from '../services/dateService';
+import { useTheme } from '../context/ThemeContext';
+import { getTodayString, formatDDMMYYYY, getMonthName } from '../services/dateService';
 import { saveBiometricData, getBiometricData } from '../services/biometricService';
 import { analyzeBiometricData } from '../services/alertService';
-import { COLORS, SINTOMAS_MATERNO, STORAGE_KEYS } from '../utils/constants';
-
-const ICONO_MAMA = require('../../imagenes/icono.png');
+import { SINTOMAS_MATERNO } from '../utils/constants';
 
 export default function PerfilMama({ navigation }) {
   const { user } = useAuth();
+  const { colors, isDark } = useTheme();
   const [peso, setPeso] = useState('');
   const [horasSueno, setHorasSueno] = useState('');
   const [presionSistolica, setPresionSistolica] = useState('');
@@ -30,12 +28,7 @@ export default function PerfilMama({ navigation }) {
   const [sintomas, setSintomas] = useState({});
 
   const today = new Date();
-  const dateDisplay = `${today.getDate()} de ${formatDDMMYYYY(today).split('/')[1] ? getMonthName(today.getMonth()) : ''} de ${today.getFullYear()}`;
-
-  function getMonthName(monthIndex) {
-    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    return meses[monthIndex] || '';
-  }
+  const dateDisplay = `${today.getDate()} de ${getMonthName(today.getMonth())} de ${today.getFullYear()}`;
 
   useEffect(() => {
     const loadToday = async () => {
@@ -75,10 +68,8 @@ export default function PerfilMama({ navigation }) {
       savedAt: new Date().toISOString(),
     };
 
-    // Guardar datos biométricos
     const result = await saveBiometricData(data);
 
-    // Analizar alertas (RF-09)
     const alerts = analyzeBiometricData(data);
     if (alerts.length > 0) {
       const dangerAlerts = alerts.filter(a => a.severity === 'danger');
@@ -105,69 +96,69 @@ export default function PerfilMama({ navigation }) {
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
-        <View style={styles.topbar}>
-          <Image source={ICONO_MAMA} style={styles.brandAvatar} />
-          <Text style={styles.brandTitle}>Mi manual del bebé</Text>
+        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
+          <Avatar size={36} />
+          <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
           <View style={styles.topbarActions}>
-            <TouchableOpacity style={styles.iconButton}>
-              <Bell size={18} color="#574146" />
+            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]}>
+              <Bell size={18} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.iconButton}
+              style={[styles.iconButton, { backgroundColor: colors.primaryBg }]}
               onPress={() => navigation.navigate('Configuracion')}
             >
-              <Settings size={18} color="#574146" />
+              <Settings size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <Text style={styles.dateDisplay}>Hoy, {dateDisplay}</Text>
+        <Text style={[styles.dateDisplay, { color: colors.textSecondary }]}>Hoy, {dateDisplay}</Text>
 
         {/* Peso */}
         <View style={styles.section}>
-          <Text style={styles.label}>Peso materno (kg) *</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Peso materno (kg) *</Text>
           <TextInput
             value={peso}
             onChangeText={setPeso}
             placeholder="Ej: 68.5"
-            placeholderTextColor="#8a7176"
-            style={styles.input}
+            placeholderTextColor={colors.textTertiary}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
             keyboardType="decimal-pad"
           />
         </View>
 
         {/* Horas de sueño */}
         <View style={styles.section}>
-          <Text style={styles.label}>Horas de sueño *</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Horas de sueño *</Text>
           <TextInput
             value={horasSueno}
             onChangeText={setHorasSueno}
             placeholder="Ej: 7"
-            placeholderTextColor="#8a7176"
-            style={styles.input}
+            placeholderTextColor={colors.textTertiary}
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
             keyboardType="number-pad"
           />
         </View>
 
         {/* Presión arterial */}
         <View style={styles.section}>
-          <Text style={styles.label}>Presión arterial (mmHg) *</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Presión arterial (mmHg) *</Text>
           <View style={styles.inputRow}>
             <TextInput
               value={presionSistolica}
               onChangeText={setPresionSistolica}
               placeholder="Sistólica"
-              placeholderTextColor="#8a7176"
-              style={[styles.input, styles.halfInput]}
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.input, styles.halfInput, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
               keyboardType="number-pad"
             />
-            <Text style={styles.separator}>/</Text>
+            <Text style={[styles.separator, { color: colors.textSecondary }]}>/</Text>
             <TextInput
               value={presionDiastolica}
               onChangeText={setPresionDiastolica}
               placeholder="Diastólica"
-              placeholderTextColor="#8a7176"
-              style={[styles.input, styles.halfInput]}
+              placeholderTextColor={colors.textTertiary}
+              style={[styles.input, styles.halfInput, { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }]}
               keyboardType="number-pad"
             />
           </View>
@@ -175,20 +166,20 @@ export default function PerfilMama({ navigation }) {
 
         {/* Síntomas */}
         <View style={styles.section}>
-          <Text style={styles.label}>Síntomas</Text>
-          <View style={styles.checkboxContainer}>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Síntomas</Text>
+          <View style={[styles.checkboxContainer, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             {SINTOMAS_MATERNO.map((nombre, index) => {
               const isChecked = !!sintomas[nombre];
               const isLast = index === SINTOMAS_MATERNO.length - 1;
               return (
                 <TouchableOpacity
                   key={nombre}
-                  style={[styles.checkboxRow, !isLast && styles.checkboxRowBorder]}
+                  style={[styles.checkboxRow, !isLast && { borderBottomWidth: 1, borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }]}
                   onPress={() => toggleSintoma(nombre)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.checkboxLabel}>{nombre}</Text>
-                  <View style={[styles.checkboxBox, isChecked && styles.checkboxBoxChecked]}>
+                  <Text style={[styles.checkboxLabel, { color: colors.text }]}>{nombre}</Text>
+                  <View style={[styles.checkboxBox, { borderColor: colors.primary }, isChecked && { backgroundColor: colors.primary }]}>
                     {isChecked && <Check size={14} color="#ffffff" strokeWidth={3} />}
                   </View>
                 </TouchableOpacity>
@@ -197,7 +188,7 @@ export default function PerfilMama({ navigation }) {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.85}>
+        <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={handleSave} activeOpacity={0.85}>
           <Text style={styles.saveButtonText}>Guardar</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -215,23 +206,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f1eee8',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,115,88,0.12)',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 20,
     marginBottom: 20,
   },
-  brandAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    resizeMode: 'cover',
-  },
   brandTitle: {
     fontSize: 18,
-    color: COLORS.primary,
     fontWeight: '700',
     flex: 1,
     marginLeft: 12,
@@ -244,13 +226,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 16,
-    backgroundColor: COLORS.primaryBg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   dateDisplay: {
     fontSize: 14,
-    color: COLORS.textSecondary,
     marginBottom: 20,
   },
   section: {
@@ -259,18 +239,14 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 8,
     marginLeft: 4,
-    color: COLORS.textSecondary,
     fontSize: 13,
     fontWeight: '600',
   },
   input: {
-    backgroundColor: '#ffffff',
-    borderColor: COLORS.cardBorder,
     borderWidth: 1,
     borderRadius: 16,
     paddingHorizontal: 14,
     height: 48,
-    color: COLORS.text,
     fontSize: 16,
   },
   inputRow: {
@@ -283,14 +259,11 @@ const styles = StyleSheet.create({
   },
   separator: {
     fontSize: 18,
-    color: COLORS.textSecondary,
     fontWeight: '700',
   },
   checkboxContainer: {
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.cardBorder,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -300,13 +273,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-  checkboxRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,115,88,0.08)',
-  },
   checkboxLabel: {
     fontSize: 14,
-    color: COLORS.text,
     flex: 1,
     paddingRight: 12,
   },
@@ -315,19 +283,14 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxBoxChecked: {
-    backgroundColor: COLORS.primary,
-  },
   saveButton: {
-    backgroundColor: COLORS.primary,
     borderRadius: 999,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: COLORS.primary,
+    shadowColor: '#EB5D8B',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

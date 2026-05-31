@@ -29,6 +29,8 @@ export const register = async ({ fullName, email, password, birthDate, furDate, 
       birthDate: birthDate || null,
       furDate: furDate || null,
       babyDate: babyDate || null,
+      avatarIcon: 'heart',
+      avatarColor: '#EB5D8B',
       createdAt: new Date().toISOString(),
     };
 
@@ -45,6 +47,8 @@ export const register = async ({ fullName, email, password, birthDate, furDate, 
       email: newProfile.email,
       fullName: newProfile.fullName,
       furDate: newProfile.furDate,
+      avatarIcon: newProfile.avatarIcon,
+      avatarColor: newProfile.avatarColor,
       loggedInAt: new Date().toISOString(),
     }));
 
@@ -84,6 +88,8 @@ export const login = async ({ email, password }) => {
       email: user.email,
       fullName: user.fullName,
       furDate: user.furDate,
+      avatarIcon: user.avatarIcon || 'heart',
+      avatarColor: user.avatarColor || '#EB5D8B',
       loggedInAt: new Date().toISOString(),
     };
     await AsyncStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(session));
@@ -136,8 +142,14 @@ export const updateProfile = async (updates) => {
     profiles[index] = { ...profiles[index], ...updates };
     await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profiles));
 
-    // Actualizar sesión también
-    const updatedSession = { ...session, ...updates };
+    // Actualizar sesión también (solo campos de sesión)
+    const sessionUpdates = {};
+    if (updates.fullName !== undefined) sessionUpdates.fullName = updates.fullName;
+    if (updates.email !== undefined) sessionUpdates.email = updates.email;
+    if (updates.furDate !== undefined) sessionUpdates.furDate = updates.furDate;
+    if (updates.avatarIcon !== undefined) sessionUpdates.avatarIcon = updates.avatarIcon;
+    if (updates.avatarColor !== undefined) sessionUpdates.avatarColor = updates.avatarColor;
+    const updatedSession = { ...session, ...sessionUpdates };
     await AsyncStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(updatedSession));
 
     return { success: true, message: 'Perfil actualizado.', user: updatedSession };
