@@ -1,48 +1,35 @@
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Bell, Settings, BarChart3, CalendarDays, FileText, BellRing, ChevronRight } from 'lucide-react-native';
+import { Settings, BarChart3, CalendarDays, BellRing, ChevronRight, Baby } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
 import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { calcularSemanasGestacion, calcularDiasRestantes, calcularFPP, parseDDMMYYYY, formatDDMMYYYY } from '../services/dateService';
+import { useEtapa } from '../context/EtapaContext';
 import * as calendarService from '../services/calendarService';
 
 export default function Perfil({ navigation }) {
   const { user, logout } = useAuth();
   const { colors } = useTheme();
-  const [gestacion, setGestacion] = useState({ semanas: '--', diasRestantes: '--', fpp: '--' });
+  const { etapa, embarazoData, bebeData, isSinDatos, isPreParto, isPostParto } = useEtapa();
   const [todayEventsCount, setTodayEventsCount] = useState(0);
 
   useEffect(() => {
-    if (user?.furDate) {
-      const fur = parseDDMMYYYY(user.furDate);
-      if (fur) {
-        const semanas = calcularSemanasGestacion(fur);
-        const dias = calcularDiasRestantes(fur);
-        const fpp = calcularFPP(fur);
-        setGestacion({
-          semanas: semanas !== null ? semanas : '--',
-          diasRestantes: dias !== null ? dias : '--',
-          fpp: fpp ? formatDDMMYYYY(fpp) : '--',
-        });
-      }
-    }
     const loadToday = async () => {
       const today = await calendarService.getTodayEvents();
       setTodayEventsCount(today.length);
     };
     loadToday();
-  }, [user]);
+  }, []);
 
   const handleLogout = () => {
     Alert.alert(
-      'Cerrar sesión',
-      '¿Estás segura de que deseas cerrar sesión?',
+      'Cerrar sesion',
+      '¿Estás segura de que deseas cerrar sesion?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Cerrar sesión',
+          text: 'Cerrar sesion',
           style: 'destructive',
           onPress: () => {
             logout();
@@ -59,25 +46,6 @@ export default function Perfil({ navigation }) {
   return (
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Top Bar */}
-        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
-          <Avatar size={36} />
-          <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
-          <View style={styles.topbarActions}>
-            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Calendario')}>
-              <Bell size={18} color={colors.textSecondary} />
-              {todayEventsCount > 0 && (
-                <View style={[styles.badge, { backgroundColor: colors.danger }]}>
-                  <Text style={styles.badgeText}>{todayEventsCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Configuracion')}>
-              <Settings size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <Avatar size={80} />
@@ -88,25 +56,64 @@ export default function Perfil({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Pregnancy Info */}
-        {user?.furDate && (
+        {/* Pregnancy / Baby Info */}
+        {isPreParto && embarazoData && (
           <View style={[styles.pregnancyCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <Text style={[styles.cardTitle, { color: colors.text }]}>Mi Embarazo</Text>
             <View style={styles.pregnancyStats}>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{gestacion.semanas}</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{embarazoData.semanas || '--'}</Text>
                 <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Semanas</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{gestacion.diasRestantes}</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{embarazoData.diasRestantes || '--'}</Text>
                 <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Días restantes</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{gestacion.fpp}</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>
+                  {embarazoData.fpp ? `${embarazoData.fpp.getDate()}/${embarazoData.fpp.getMonth() + 1}/${embarazoData.fpp.getFullYear()}` : '--'}
+                </Text>
                 <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Fecha probable</Text>
               </View>
             </View>
           </View>
+        )}
+
+        {isPostParto && bebeData && (
+          <View style={[styles.pregnancyCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Mi Bebé: {bebeData.nombre || 'Bebé'}</Text>
+            <View style={styles.pregnancyStats}>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{bebeData.edad?.dias || '--'}</Text>
+                <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Días</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{bebeData.edad?.semanas || '--'}</Text>
+                <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Semanas</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{bebeData.fechaNac || '--'}</Text>
+                <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Nacimiento</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {isSinDatos && (
+          <TouchableOpacity
+            style={[styles.pregnancyCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            onPress={() => navigation.navigate('Configuracion')}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Completá tu perfil</Text>
+            <Text style={[styles.menuDesc, { color: colors.textTertiary }]}>
+              Configurá tu fecha de última regla o la fecha de nacimiento de tu bebé para acceder al seguimiento.
+            </Text>
+            <View style={[styles.setupLink, { marginTop: 12 }]}>
+              <Text style={[styles.setupLinkText, { color: colors.primary }]}>Ir a Configuración</Text>
+              <ChevronRight size={16} color={colors.primary} />
+            </View>
+          </TouchableOpacity>
         )}
 
         {/* Menu Options */}
@@ -122,6 +129,17 @@ export default function Perfil({ navigation }) {
             <ChevronRight size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} onPress={() => navigation.navigate('PerfilHijo')}>
+            <View style={[styles.menuIconWrapper, { backgroundColor: colors.primaryBg }]}>
+              <Baby size={24} color={colors.textSecondary} />
+            </View>
+            <View style={styles.menuContent}>
+              <Text style={[styles.menuTitle, { color: colors.text }]}>Mi Bebé</Text>
+              <Text style={[styles.menuDesc, { color: colors.textTertiary }]}>Métricas y síntomas del bebé</Text>
+            </View>
+            <ChevronRight size={20} color={colors.textTertiary} />
+          </TouchableOpacity>
+
           <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} onPress={() => navigation.navigate('Calendario')}>
             <View style={[styles.menuIconWrapper, { backgroundColor: colors.primaryBg }]}>
               <CalendarDays size={24} color={colors.textSecondary} />
@@ -133,18 +151,7 @@ export default function Perfil({ navigation }) {
             <ChevronRight size={20} color={colors.textTertiary} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={[styles.menuIconWrapper, { backgroundColor: colors.primaryBg }]}>
-              <FileText size={24} color={colors.textSecondary} />
-            </View>
-            <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: colors.text }]}>Mis Notas</Text>
-              <Text style={[styles.menuDesc, { color: colors.textTertiary }]}>Registro personal del embarazo</Text>
-            </View>
-            <ChevronRight size={20} color={colors.textTertiary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <TouchableOpacity style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.cardBorder }]} onPress={() => navigation.navigate('Recordatorios')}>
             <View style={[styles.menuIconWrapper, { backgroundColor: colors.primaryBg }]}>
               <BellRing size={24} color={colors.textSecondary} />
             </View>
@@ -314,6 +321,15 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 16,
+    fontWeight: '600',
+  },
+  setupLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  setupLinkText: {
+    fontSize: 14,
     fontWeight: '600',
   },
 });

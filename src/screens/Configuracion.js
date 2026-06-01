@@ -406,7 +406,7 @@ export default function Configuracion({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ─── Top Bar ─── */}
         <View style={dynamicStyles.topbar}>
-          <TouchableOpacity style={dynamicStyles.backButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={dynamicStyles.backButton} onPress={() => navigation.goBack()} activeOpacity={0.7}>
             <ArrowLeft size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           <Text style={dynamicStyles.topbarTitle}>Configuración</Text>

@@ -4,6 +4,7 @@
 // ──────────────────────────────────────────────────────────
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateYYYYMMDD } from './dateService';
+import { scheduleCalendarReminder, getRemindersConfig } from './notificationService';
 
 const CALENDAR_EVENTS_KEY = '@manualdelbebe_calendar_events';
 
@@ -51,6 +52,20 @@ export const addEvent = async (event) => {
     };
     events.push(newEvent);
     await AsyncStorage.setItem(CALENDAR_EVENTS_KEY, JSON.stringify(events));
+
+    // Programar notificación si es cita médica
+    if (event.type === 'medical' && event.date) {
+      try {
+        const config = await getRemindersConfig();
+        if (config.enabled && config.calendarReminder) {
+          const eventDate = new Date(event.date + 'T' + (event.time || '09:00') + ':00');
+          await scheduleCalendarReminder(event.title, eventDate, config.calendarHoursBefore);
+        }
+      } catch (notifError) {
+        console.warn('No se pudo programar notificación:', notifError);
+      }
+    }
+
     return newEvent;
   } catch (e) {
     console.error('Error saving calendar event', e);

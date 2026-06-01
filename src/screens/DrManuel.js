@@ -15,7 +15,7 @@ export default function DrManuel({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
         <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()} activeOpacity={0.7}>
             <ArrowLeft size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           <Text style={[styles.topbarTitle, { color: colors.primary }]}>Dr. Manuel</Text>

@@ -8,9 +8,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Bell, Settings, Check } from 'lucide-react-native';
+import { ArrowLeft, Check } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
-import Avatar from '../components/Avatar';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getTodayString, formatDDMMYYYY, getMonthName } from '../services/dateService';
@@ -75,7 +74,7 @@ export default function PerfilMama({ navigation }) {
       const dangerAlerts = alerts.filter(a => a.severity === 'danger');
       if (dangerAlerts.length > 0) {
         Alert.alert(
-          '⚠️ Atención importante',
+          'Atención importante',
           dangerAlerts.map(a => a.message).join('\n\n'),
           [{ text: 'Entendido' }]
         );
@@ -97,19 +96,11 @@ export default function PerfilMama({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
         <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
-          <Avatar size={36} />
-          <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
-          <View style={styles.topbarActions}>
-            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]}>
-              <Bell size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.iconButton, { backgroundColor: colors.primaryBg }]}
-              onPress={() => navigation.navigate('Configuracion')}
-            >
-              <Settings size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+            <ArrowLeft size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <Text style={[styles.topbarTitle, { color: colors.primary }]}>Mis Estadísticas</Text>
+          <View style={styles.topbarSpacer} />
         </View>
 
         <Text style={[styles.dateDisplay, { color: colors.textSecondary }]}>Hoy, {dateDisplay}</Text>
@@ -212,22 +203,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 20,
   },
-  brandTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    flex: 1,
-    marginLeft: 12,
-  },
-  topbarActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 16,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  topbarTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  topbarSpacer: {
+    width: 40,
   },
   dateDisplay: {
     fontSize: 14,

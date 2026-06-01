@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Bell, Settings, Trash2, Clock, Stethoscope, Star, ClipboardList, Cake, ChevronLeft, ChevronRight, Plus, Edit3 } from 'lucide-react-native';
+import { Bell, Trash2, Clock, Stethoscope, Star, ClipboardList, Cake, ChevronLeft, ChevronRight, Plus, Edit3 } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
-import Avatar from '../components/Avatar';
 import EventForm from '../components/EventForm';
 import { useTheme } from '../context/ThemeContext';
 import * as calendarService from '../services/calendarService';
@@ -137,25 +136,6 @@ export default function Calendario({ navigation }) {
   return (
     <ScreenLayout>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Top Bar */}
-        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
-          <Avatar size={36} />
-          <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
-          <View style={styles.topbarActions}>
-            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Calendario')}>
-              <Bell size={18} color={colors.textSecondary} />
-              {todayEvents.length > 0 && (
-                <View style={[styles.badge, { backgroundColor: colors.danger }]}>
-                  <Text style={styles.badgeText}>{todayEvents.length}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.iconButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.navigate('Configuracion')}>
-              <Settings size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* Today's alerts */}
         {todayEvents.length > 0 && (
           <View style={[styles.alertSection, { backgroundColor: colors.primary }]}>

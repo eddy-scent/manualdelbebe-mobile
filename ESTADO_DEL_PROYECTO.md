@@ -1,15 +1,15 @@
-# Estado del Proyecto — Mi manual del bebé
+# Estado del Proyecto — MomsAI
 
 **Fecha de actualización:** 31 de mayo de 2026  
-**Versión actual:** 1.0.0  
+**Version actual:** 1.0.0  
 **Stack:** React Native 0.81 + Expo SDK 54  
-**Commits:** 2 (estructura inicial + prototipo frontend) + cambios pendientes de commit
+**Plataformas:** Android + iOS
 
 ---
 
 ## Resumen Ejecutivo
 
-La aplicación "Mi manual del bebé" es una app móvil dirigida a mujeres embarazadas y madres recientes, desarrollada en React Native con Expo. El proyecto cuenta con un **frontend funcional** que implementa navegación, autenticación local, registro de datos biométricos, calculadoras obstétricas, calendario de eventos, motor de alertas, edición de perfil con avatar personalizable y soporte de tema claro/oscuro en todas las pantallas. La autenticación y el almacenamiento utilizan **AsyncStorage (mock local)** — no hay backend real conectado.
+MomsAI es una app movil para mujeres embarazadas y madres recientes. Cuenta con autenticacion, registro de datos biometricos, calculadoras obstetricas, calendario de eventos, motor de alertas, edicion de perfil con avatar personalizable, tema claro/oscuro, recordatorios con notificaciones push locales, y un sistema de 3 etapas (sin datos / pre-parto / post-parto) que adapta la interfaz segun el estado de la usuaria. El almacenamiento es local (AsyncStorage) con una capa de abstraccion preparada para Supabase.
 
 ---
 
@@ -17,40 +17,49 @@ La aplicación "Mi manual del bebé" es una app móvil dirigida a mujeres embara
 
 ```
 src/
-├── components/        # Componentes reutilizables
-│   ├── Avatar.js          ← NUEVO: avatar con icono + color sincronizado
+├── components/
+│   ├── Avatar.js              ← Avatar con icono + color del AuthContext
 │   ├── CalculadoraEmbarazo.js
 │   ├── CalculadoraOvulacion.js
-│   ├── DraggableFab.js
-│   ├── EventForm.js
-│   ├── Footer.js          ← Tema aplicado
-│   └── ScreenLayout.js    ← Tema aplicado
-├── context/           # Estado global (React Context)
-│   ├── AuthContext.js
-│   └── ThemeContext.js     ← Tema claro/oscuro con persistencia
-├── navigation/        # Navegación
-│   └── MainTabs.js
-├── screens/           # Pantallas principales (todas con tema)
-│   ├── Calendario.js      ← Avatar + tema
-│   ├── Configuracion.js   ← Edición de perfil + selector de tema
-│   ├── DrManuel.js        ← Placeholder con tema
-│   ├── InicioSesion.js    ← Tema
-│   ├── Menu.js            ← Avatar + tema
-│   ├── Perfil.js          ← Avatar + tema
-│   ├── PerfilHijo.js      ← Placeholder (sin tema)
-│   ├── PerfilMama.js      ← Avatar + tema
-│   └── Registro.js        ← Tema
-├── services/          # Lógica de negocio
-│   ├── alertService.js
-│   ├── api.js
-│   ├── authService.js     ← Avatar persistido en sesión
-│   ├── biometricService.js
-│   ├── calendarService.js
-│   └── dateService.js
-└── utils/             # Utilidades y constantes
-    ├── constants.js       ← Paleta clara + oscura (DARK_COLORS)
-    ├── dateUtils.js
-    └── validators.js
+│   ├── DraggableFab.js        ← FAB arrastrable (Dr. Manuel)
+│   ├── EventForm.js           ← Formulario de eventos del calendario
+│   ├── EvolutionChart.js      ← Grafico de barras (peso/suenio/presion)
+│   ├── Footer.js              ← Tab bar persistente
+│   ├── Header.js              ← Header persistente (avatar + MomsAI + campanita + ajustes)
+│   └── ScreenLayout.js        ← Layout base con tema
+├── context/
+│   ├── AuthContext.js          ← Sesion de usuaria
+│   ├── EtapaContext.js         ← Manejo de etapas (sin_datos/pre_parto/post_parto)
+│   └── ThemeContext.js         ← Tema claro/oscuro
+├── navigation/
+│   └── MainTabs.js             ← Tabs principales + Header + Footer
+├── screens/
+│   ├── Calendario.js           ← Calendario mensual + eventos
+│   ├── Configuracion.js        ← Editar perfil + tema + legal
+│   ├── DrManuel.js             ← Placeholder chat IA
+│   ├── InicioSesion.js         ← Login
+│   ├── Menu.js                 ← Home con cards adaptativas por etapa
+│   ├── Perfil.js               ← Perfil con info por etapa
+│   ├── PerfilHijo.js           ← Metricas bebe (pre/post-parto)
+│   ├── PerfilMama.js           ← Metricas madre (biometricos)
+│   ├── Recordatorios.js        ← Configuracion de notificaciones
+│   ├── Registro.js             ← Registro de cuenta
+│   └── RegistroBebe.js         ← Registro inicial del bebe
+├── services/
+│   ├── alertService.js         ← Motor de alertas (RF-09)
+│   ├── api.js                  ← (reservado para API externa)
+│   ├── authService.js          ← Auth mock con AsyncStorage
+│   ├── babyService.js          ← CRUD datos del bebe
+│   ├── biometricService.js     ← CRUD datos biometricos madre
+│   ├── calendarService.js      ← CRUD eventos calendario
+│   ├── dataService.js          ← Capa de abstraccion (preparado para Supabase)
+│   ├── dateService.js          ← Utilidades de fecha + calculos obstetricos
+│   ├── mockService.js          ← Inicializacion de datos de ejemplo
+│   └── notificationService.js  ← Notificaciones push locales
+└── utils/
+    ├── constants.js            ← Colores (claro + oscuro) + constantes
+    ├── dateUtils.js            ← Formateo de fechas
+    └── validators.js           ← Validaciones de entrada
 ```
 
 ---
@@ -61,129 +70,80 @@ src/
 
 | ID | Requerimiento | Estado | Detalle |
 |---|---|---|---|
-| RF-01 | Registro de Cuenta | ✅ Implementado | Formulario completo con nombre, email, contraseña + campos opcionales (nacimiento, FUR, fecha bebé). Validación incluida. |
-| RF-02 | Autenticación | ✅ Implementado | Login con email/contraseña. Mock con AsyncStorage. Persistencia de sesión con datos de avatar. |
-| RF-03 | Edición de Perfil | ✅ Implementado | `Configuracion.js` permite editar nombre, correo, contraseña y avatar (5 iconos × 8 colores). Cambios se sincronizan automáticamente en toda la app. |
-| RF-04 | Personalización de Interfaz | ⚠️ Parcial | Modo claro/oscuro implementado vía `ThemeContext` con persistencia. Aplicado a todas las pantallas. Falta selector de idioma. |
-| RF-05 | Datos Biométricos Maternos | ✅ Implementado | Registro diario de peso, horas de sueño, presión arterial (sistólica/diastólica) y 8 síntomas maternos via checkboxes. Guarda por fecha en AsyncStorage. |
-| RF-06 | Métricas Infantiles | ❌ No implementado | Las constantes están definidas en `constants.js` (`SINTOMAS_INFANTIL_POSTPARTO`, `MOVIMIENTOS_FETALES`) pero no hay pantalla ni formulario. `PerfilHijo.js` es placeholder. |
-| RF-07 | Visualización de Evolución | ❌ No implementado | No hay gráficos de peso/presión/sueño vs tiempo. Sin librería de charts integrada. |
-| RF-08 | Cálculo Obstétrico | ✅ Implementado | `CalculadoraEmbarazo.js` calcula FPP (+280 días), semanas de gestación, días restantes y trimestre. También en `Perfil.js` si tiene FUR. |
-| RF-09 | Motor de Alertas | ✅ Implementado | `alertService.js` analiza presión arterial, peso, sueño y síntomas de bandera roja. Genera alertas warning/danger. Se ejecuta al guardar biométricos. |
-| RF-10 | Creación de Tareas | ✅ Implementado | `EventForm.js` + `calendarService.js` permiten crear eventos con título, descripción, fecha, hora y tipo (médico/milestone/tarea). |
-| RF-11 | Actualización de Tareas | ✅ Implementado | Se puede editar y eliminar eventos desde el calendario. |
-| RF-12 | Recordatorios Automatizados | ❌ No implementado | No hay notificaciones push. Sin integración con expo-notifications. |
-| RF-13 | Interacción con Dr. Manuel | ⚠️ Placeholder | `DrManuel.js` muestra UI informativa con badge "Próximamente". No hay chat real ni integración con IA. |
-| RF-14 | Visualización en Calendario | ✅ Implementado | Calendario mensual interactivo con indicadores de eventos, navegación por meses, vista de eventos del día seleccionado. |
+| RF-01 | Registro de Cuenta | ✅ | Formulario completo con nombre, email, password + campos opcionales |
+| RF-02 | Autenticacion | ✅ | Login con email/password. Mock AsyncStorage. Persistencia de sesion |
+| RF-03 | Edicion de Perfil | ✅ | Editar nombre, correo, password, avatar (5 iconos x 8 colores) |
+| RF-04 | Personalizacion de Interfaz | ⚠️ Parcial | Tema claro/oscuro implementado. Falta selector de idioma |
+| RF-05 | Datos Biometricos Maternos | ✅ | Peso, sueno, presion arterial, 8 sintomas via checkboxes |
+| RF-06 | Metricas Infantiles | ✅ | Pre-parto: movimiento fetal. Post-parto: peso, longitud, tomas, 5 sintomas |
+| RF-07 | Visualizacion de Evolucion | ⚠️ Parcial | Grafico de barras (7 dias). Limites: peso 120, sueno 12, presion 160 |
+| RF-08 | Calculo Obstetrico | ✅ | FPP (+280 dias), semanas, trimestre. Calculadoras de embarazo y ovulacion |
+| RF-09 | Motor de Alertas | ✅ | Analiza presion, peso, sueno, sintomas de bandera roja |
+| RF-10 | Creacion de Tareas | ✅ | Eventos con titulo, descripcion, fecha, hora, tipo |
+| RF-11 | Actualizacion de Tareas | ✅ | Editar y eliminar eventos desde el calendario |
+| RF-12 | Recordatorios Automatizados | ✅ | Notificaciones push locales: biometricos diarios, bebe diario, citas medicas |
+| RF-13 | Interaccion con Dr. Manuel | ⚠️ Placeholder | UI informativa. No hay chat real ni integracion con IA |
+| RF-14 | Visualizacion en Calendario | ✅ | Calendario mensual con indicadores de eventos |
 
 ### Requerimientos No Funcionales
 
 | ID | Requerimiento | Estado | Detalle |
 |---|---|---|---|
-| RNF-01 | Usabilidad | ✅ Cumplido | Botones grandes, tipografía legible, navegación en ≤3 interacciones. UI limpia y accesible. |
-| RNF-02 | Seguridad y Privacidad | ❌ No implementado | AsyncStorage sin encriptación. Contraseñas en texto plano. Sin TLS (no hay backend). No cumple AES-256 ni Ley 19.628. |
-| RNF-03 | Disponibilidad Offline | ⚠️ Parcial | La app funciona offline porque todo es local (AsyncStorage), pero no hay caché de contenido estático ni guías. |
-| RNF-04 | Sincronización de Sesión | ❌ No implementado | No hay WebView ni sincronización de token entre componentes. |
-| RNF-05 | Tolerancia a Fallas | ❌ No implementado | Sin manejo de errores de red ni fallback a mensaje estático. No hay backend al que conectarse. |
-| RNF-06 | Exención de Responsabilidad | ✅ Implementado | Texto informativo visible en `Configuracion.js` (sección Legal) y en `DrManuel.js`. |
-| RNF-07 | Tiempo de Respuesta | ✅ Cumplido | Navegación nativa con animaciones fluidas. Sin dependencias pesadas. |
-| RNF-08 | Interfaz Responsiva | ⚠️ Parcial | `SafeAreaView` + `ScrollView`. Tema claro/oscuro adaptativo en todas las pantallas. Sin testing en múltiples tamaños. |
-| RNF-09 | Persistencia de Estado | ✅ Implementado | AsyncStorage guarda sesión, perfil (con avatar), datos biométricos, eventos y preferencia de tema. |
-| RNF-10 | Indicadores de Carga | ✅ Implementado | `ActivityIndicator` en botones de login, registro y guardado de perfil. |
-
----
-
-## Priorización MoSCoW (según documento Dr. Manuel)
-
-### Must Have (Prioridad Muy Alta)
-| Requerimiento | Estado |
-|---|---|
-| RF-01 Registro de Cuenta | ✅ |
-| RF-02 Autenticación | ✅ |
-| RF-05 Datos Biométricos | ✅ |
-| RF-08 Cálculo Obstétrico | ✅ |
-| RF-09 Motor de Alertas | ✅ |
-| RF-13 Dr. Manuel | ⚠️ Placeholder |
-
-### Should Have (Prioridad Alta)
-| Requerimiento | Estado |
-|---|---|
-| RF-06 Métricas Infantiles | ❌ |
-
-### Could Have (Prioridad Media)
-| Requerimiento | Estado |
-|---|---|
-| RF-03 Edición de Perfil | ✅ |
-| RF-10/11/12/14 Calendario + Tareas + Recordatorios | ✅ / ✅ / ❌ / ✅ |
-
-### Won't Have (Prioridad Baja)
-| Requerimiento | Estado |
-|---|---|
-| RF-04 Personalización de Interfaz | ⚠️ Parcial (tema claro/oscuro) |
-| RF-07 Visualización de Evolución | ❌ |
+| RNF-01 | Usabilidad | ✅ | Botones grandes, tipografia legible, navegacion en <=3 interacciones |
+| RNF-02 | Seguridad y Privacidad | ❌ | AsyncStorage sin encriptacion. Passwords en texto plano |
+| RNF-03 | Disponibilidad Offline | ✅ | App funciona offline (todo local) |
+| RNF-04 | Sincronizacion de Sesion | ❌ | No hay WebView ni sincronizacion de token |
+| RNF-05 | Tolerancia a Fallas | ❌ | Sin manejo de errores de red ni fallback |
+| RNF-06 | Exencion de Responsabilidad | ✅ | Texto en Configuracion (Legal) y DrManuel |
+| RNF-07 | Tiempo de Respuesta | ✅ | Navegacion nativa con animaciones fluidas |
+| RNF-08 | Interfaz Responsiva | ⚠️ Parcial | SafeAreaView + ScrollView. Sin testing multi-dispositivo |
+| RNF-09 | Persistencia de Estado | ✅ | Sesion, perfil, biometricos, eventos, tema, recordatorios |
+| RNF-10 | Indicadores de Carga | ✅ | ActivityIndicator en botones async |
 
 ---
 
 ## Resumen de Cobertura
 
 ```
-Requerimientos Funcionales:     8/14 implementados  (57%)
-                                2/14 parciales       (14%)
-                                4/14 no implementados (29%)
+Requerimientos Funcionales:     10/14 implementados  (71%)
+                                2/14 parciales        (14%)
+                                2/14 no implementados (14%)
 
-Requerimientos No Funcionales:  5/10 implementados  (50%)
-                                2/10 parciales       (20%)
+Requerimientos No Funcionales:  5/10 implementados   (50%)
+                                2/10 parciales        (20%)
                                 3/10 no implementados (30%)
 ```
 
 ---
 
-## Componentes Clave
+## Sistema de Etapas
 
-### Avatar (`src/components/Avatar.js`)
-- Componente reutilizable que lee `avatarIcon` y `avatarColor` del `AuthContext`
-- 5 iconos disponibles: corazón, bebé, flor, usuaria, protección
-- 8 colores de fondo seleccionables
-- Tamaño configurable (32px en top bars, 80px en perfil)
-- Sincronización automática: al cambiar en Configuración, se refleja en Menu, Calendario, Perfil, PerfilMama
+La app adapta su contenido segun 3 etapas:
 
-### ThemeContext (`src/context/ThemeContext.js`)
-- Provee `colors`, `isDark`, `toggleTheme()`, `setLightTheme()`, `setDarkTheme()`
-- Persiste preferencia en AsyncStorage (`@manualdelbebe_theme`)
-- Paleta clara: `COLORS` en `constants.js`
-- Paleta oscura: `DARK_COLORS` en `constants.js`
-- Aplicado a: todas las pantallas + ScreenLayout + Footer
+| Etapa | Condicion | Menu | Perfil |
+|---|---|---|---|
+| **sin_datos** | Sin FUR, sin bebe | Invitacion a configurar | "Completa tu perfil" |
+| **pre_parto** | Tiene FUR | Semana X, trimestre, desarrollo fetal | Mi Embarazo (semanas, FPP) |
+| **post_parto** | Tiene bebe registrado | Edad del bebe, hitos | Mi Bebe (nombre, edad) |
 
-### Configuracion (`src/screens/Configuracion.js`)
-- Sección "Editar Perfil": avatar (icono + color), nombre, email, cambio de contraseña
-- Sección "Apariencia": toggle modo claro/oscuro
-- Sección "Legal": exención de responsabilidad
-- Sección "Cerrar Sesión"
+Manejado por `EtapaContext.js` — se calcula automaticamente del perfil de la usuaria.
 
 ---
 
-## Qué Falta (Roadmap Sugerido)
+## Que Falta
 
-### Fase 1 — Completar Must Have
-1. **RF-13 Dr. Manuel**: Integrar chat con IA (WebView o API externa). Conectar con los datos biométricos de la usuaria.
-2. **RF-06 Métricas Infantiles**: Crear formulario de registro infantil (pre-parto: movimiento fetal; post-parto: peso, longitud, alimentación, síntomas).
+### Fase 1 — Must Have
+1. **RF-13 Dr. Manuel**: Integrar chat con IA (WebView o API externa)
 
-### Fase 2 — Completar Could Have
-3. ~~**RF-03 Edición de Perfil**~~ ✅ Implementado
-4. **RF-12 Recordatorios**: Integrar `expo-notifications` para push notifications de citas y tareas.
+### Fase 2 — RNFs
+2. **RNF-02 Seguridad**: Migrar a Supabase con encriptacion AES-256 y TLS 1.2+
+3. **RNF-05 Tolerancia a Fallas**: Manejo de errores de red + fallback offline
+4. **RNF-04 Sincronizacion**: Token de sesion compartido con WebView
 
-### Fase 3 — Completar Won't Have + RNFs
-5. **RF-07 Visualización**: Integrar librería de charts (victory-native o react-native-chart-kit) para gráficos de evolución.
-6. **RF-04 Personalización**: Selector de idioma (el tema claro/oscuro ya está).
-7. **RNF-02 Seguridad**: Migrar a backend real con encriptación AES-256 y TLS 1.2+.
-8. **RNF-06 Exención**: Ya implementada en Configuración. Considerar aceptación obligatoria al registro.
-
-### Fase 4 — Backend y Producción
-9. Implementar API REST o GraphQL (Firebase, Supabase, o custom).
-10. Migrar autenticación a JWT con refresh tokens.
-11. Encriptar datos biométricos en reposo.
-12. Testing en múltiples dispositivos (RNF-08).
-13. Manejo de errores de red y tolerancia a fallas (RNF-05).
+### Fase 3 — Mejoras
+5. **RF-04 Idioma**: Selector de idioma
+6. **RF-07 Charts**: Libreria externa (victory-native o react-native-chart-kit)
+7. Testing en multiples dispositivos
 
 ---
 
@@ -194,23 +154,14 @@ Requerimientos No Funcionales:  5/10 implementados  (50%)
 | expo ~54.0.33 | Framework base |
 | react 19.1.0 | UI |
 | react-native 0.81.5 | Runtime nativo |
-| @react-navigation/* | Navegación (stack + material-top-tabs) |
-| @react-native-async-storage/async-storage | Almacenamiento local (mock) |
-| lucide-react-native | Iconografía (incluye iconos de avatar) |
-| react-native-pager-view | Navegación por tabs |
+| @react-navigation/* | Navegacion (stack + material-top-tabs) |
+| @react-native-async-storage/async-storage | Almacenamiento local |
+| lucide-react-native | Iconografia |
+| expo-notifications | Notificaciones push locales |
+| expo-device | Info del dispositivo |
+| react-native-pager-view | Navegacion por tabs |
+| react-native-gesture-handler | Gestos (DraggableFab) |
 
 ---
 
-## Notas Técnicas
-
-- **Sin backend**: Toda la data vive en AsyncStorage del dispositivo. No hay sincronización entre dispositivos.
-- **Contraseñas en texto plano**: El `authService.js` almacena passwords sin hashing (comentado en código: "En producción esto iría hasheado").
-- **Avatar sincronizado**: El componente `Avatar` lee del `AuthContext`, que a su vez se actualiza al guardar en Configuración. El `authService` persiste `avatarIcon` y `avatarColor` en la sesión.
-- **Tema global**: `ThemeContext` envuelve toda la app en `App.js`. Todas las pantallas usan `useTheme()` para obtener colores. Los modales (EventForm, Calculadoras) mantienen su diseño propio.
-- **Sin imagen de perfil**: El sistema anterior (`ICONO_MAMA` con `require()`) fue reemplazado completamente por el componente `Avatar` basado en iconos.
-- **Calculadora de Ovulación**: Existe `CalculadoraOvulacion.js` como componente pero no está conectada a ningún requerimiento formal.
-- **FAB flotante**: `DraggableFab.js` permite navegar al chat de Dr. Manuel desde cualquier pantalla principal.
-
----
-
-*Documento actualizado automáticamente a partir del análisis del código fuente y los documentos de requerimientos.*
+*Documento actualizado automaticamente.*

@@ -58,7 +58,7 @@ export default function InicioSesion({ navigation }) {
               <Heart size={32} color={colors.primary} />
             </View>
             <View style={styles.titleGroup}>
-              <Text style={[styles.title, { color: colors.text }]}>Mi manual del bebé</Text>
+              <Text style={[styles.title, { color: colors.text }]}>MomsAI</Text>
               <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Bienvenida a tu espacio seguro</Text>
             </View>
           </View>

@@ -88,7 +88,7 @@ export default function Registro({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         <View style={styles.pageContainer}>
           <View style={styles.header}>
-            <Text style={[styles.brandTitle, { color: colors.primary }]}>Mi manual del bebé</Text>
+            <Text style={[styles.brandTitle, { color: colors.primary }]}>MomsAI</Text>
             <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>Tu compañero en el viaje de la maternidad</Text>
           </View>
 
