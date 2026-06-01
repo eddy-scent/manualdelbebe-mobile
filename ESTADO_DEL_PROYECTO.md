@@ -72,7 +72,7 @@ src/
 |---|---|---|---|
 | RF-01 | Registro de Cuenta | ✅ | Formulario completo con nombre, email, password + campos opcionales |
 | RF-02 | Autenticacion | ✅ | Login con email/password. Mock AsyncStorage. Persistencia de sesion |
-| RF-03 | Edicion de Perfil | ✅ | Editar nombre, correo, password, avatar (5 iconos x 8 colores) |
+| RF-03 | Edicion de Perfil | ✅ | Editar nombre, correo, password, avatar (5 iconos x 8 colores). Seccion "Mi Situacion" para cambiar etapa |
 | RF-04 | Personalizacion de Interfaz | ⚠️ Parcial | Tema claro/oscuro implementado. Falta selector de idioma |
 | RF-05 | Datos Biometricos Maternos | ✅ | Peso, sueno, presion arterial, 8 sintomas via checkboxes |
 | RF-06 | Metricas Infantiles | ✅ | Pre-parto: movimiento fetal. Post-parto: peso, longitud, tomas, 5 sintomas |
@@ -122,11 +122,16 @@ La app adapta su contenido segun 3 etapas:
 
 | Etapa | Condicion | Menu | Perfil |
 |---|---|---|---|
-| **sin_datos** | Sin FUR, sin bebe | Invitacion a configurar | "Completa tu perfil" |
+| **sin_datos** | Sin FUR, sin bebe | Setup flow: "Estoy embarazada" / "Ya tengo un bebe" / "Ninguna" | "Completa tu perfil" → Configuracion |
 | **pre_parto** | Tiene FUR | Semana X, trimestre, desarrollo fetal | Mi Embarazo (semanas, FPP) |
 | **post_parto** | Tiene bebe registrado | Edad del bebe, hitos | Mi Bebe (nombre, edad) |
 
 Manejado por `EtapaContext.js` — se calcula automaticamente del perfil de la usuaria.
+
+**Cambio de etapa desde:**
+- **Menu.js**: Setup flow inline (3 opciones) al estar en sin_datos
+- **Configuracion.js**: Seccion "Mi Situacion" (3 opciones + campo de fecha)
+- **PerfilHijo.js**: Input de fecha de nacimiento del bebe (si etapa = desconocida)
 
 ---
 

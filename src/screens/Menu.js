@@ -147,8 +147,9 @@ export default function Menu({ navigation }) {
               <Text style={styles.setupOptionText}>Ya tengo un bebé</Text>
               <ChevronRight size={16} color="rgba(255,255,255,0.7)" />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.setupOption, { backgroundColor: 'rgba(255,255,255,0.1)' }]} onPress={() => setSetupStep(null)} activeOpacity={0.8}>
+            <TouchableOpacity style={[styles.setupOption, { backgroundColor: 'rgba(255,255,255,0.1)' }]} onPress={() => navigation.navigate('Configuracion')} activeOpacity={0.8}>
               <Text style={[styles.setupOptionText, { opacity: 0.7 }]}>Ninguna por ahora</Text>
+              <ChevronRight size={16} color="rgba(255,255,255,0.4)" />
             </TouchableOpacity>
           </View>
         )}
