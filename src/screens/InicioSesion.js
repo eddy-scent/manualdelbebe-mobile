@@ -27,11 +27,11 @@ export default function InicioSesion({ navigation }) {
     setError('');
 
     if (!email.trim()) {
-      setError('Por favor ingresá tu correo electrónico.');
+      setError('Por favor ingresa tu correo electrónico.');
       return;
     }
     if (!password) {
-      setError('Por favor ingresá tu contraseña.');
+      setError('Por favor ingresa tu contraseña.');
       return;
     }
 

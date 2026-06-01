@@ -41,11 +41,11 @@ export default function Registro({ navigation }) {
     const trimmedEmail = email.trim();
 
     if (!trimmedName) {
-      setError('Por favor ingresá tu nombre completo.');
+      setError('Por favor ingresa tu nombre completo.');
       return;
     }
     if (!isValidEmail(trimmedEmail)) {
-      setError('Por favor ingresá un correo electrónico válido.');
+      setError('Por favor ingresa un correo electrónico válido.');
       return;
     }
     if (password.length < 6) {

@@ -87,7 +87,7 @@ export default function Recordatorios({ navigation }) {
           </View>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Configurar alertas</Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            Recibí notificaciones para no olvidar tus registros y citas.
+            Recibe notificaciones para no olvidar tus registros y citas.
           </Text>
         </View>
 

@@ -31,7 +31,7 @@ export function analyzeBiometricData({ peso, horasSueno, presionSistolica, presi
         type: 'pressure',
         severity: 'warning',
         title: 'Presión arterial baja',
-        message: `Tu presión (${sys}/${dia} mmHg) está por debajo de los valores normales. Si presentas mareos o desmayos, consultá a tu médico.`,
+        message: `Tu presión (${sys}/${dia} mmHg) está por debajo de los valores normales. Si presentas mareos o desmayos, consulta a tu médico.`,
       });
     }
   }
@@ -43,7 +43,7 @@ export function analyzeBiometricData({ peso, horasSueno, presionSistolica, presi
         type: 'weight',
         severity: 'warning',
         title: 'Peso por debajo del rango',
-        message: `El peso registrado (${pesoNum} kg) parece bajo. Consultá con tu médico si esto es preocupante.`,
+        message: `El peso registrado (${pesoNum} kg) parece bajo. Consulta con tu médico si esto es preocupante.`,
       });
     } else if (pesoNum > ALERT_THRESHOLDS.WEIGHT_MAX_KG) {
       alerts.push({
@@ -90,7 +90,7 @@ export function analyzeBiometricData({ peso, horasSueno, presionSistolica, presi
         type: 'symptom',
         severity: 'warning',
         title: 'Múltiples síntomas registrados',
-        message: `Registraste ${activeSymptoms.length} síntomas hoy. Si estos persisten o se intensifican, consultá con tu médico.`,
+        message: `Registraste ${activeSymptoms.length} síntomas hoy. Si estos persisten o se intensifican, consulta con tu médico.`,
       });
     }
   }

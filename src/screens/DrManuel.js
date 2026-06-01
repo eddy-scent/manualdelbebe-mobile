@@ -56,7 +56,7 @@ export default function DrManuel({ navigation }) {
             <View style={styles.infoContent}>
               <Text style={[styles.infoTitle, { color: colors.text }]}>Consultas en lenguaje natural</Text>
               <Text style={[styles.infoDesc, { color: colors.textSecondary }]}>
-                Escribí tus dudas de forma simple y Dr. Manuel te orientará.
+                Escribe tus dudas de forma simple y Dr. Manuel te orientará.
               </Text>
             </View>
           </View>

@@ -67,7 +67,7 @@ export const login = async ({ email, password }) => {
   try {
     const stored = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
     if (!stored) {
-      return { success: false, message: 'No hay cuentas registradas. Creá una cuenta primero.' };
+      return { success: false, message: 'No hay cuentas registradas. Crea una cuenta primero.' };
     }
 
     const profiles = JSON.parse(stored);

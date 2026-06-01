@@ -99,14 +99,14 @@ export default function Configuracion({ navigation }) {
 
     // Validar email
     if (!isValidEmail(email)) {
-      setError('Ingresá un correo electrónico válido.');
+      setError('Ingresa un correo electrónico válido.');
       return;
     }
 
     // Validar cambio de contraseña (si se quiere cambiar)
     if (newPassword || confirmPassword || currentPassword) {
       if (!currentPassword) {
-        setError('Ingresá tu contraseña actual para cambiarla.');
+        setError('Ingresa tu contraseña actual para cambiarla.');
         return;
       }
       if (newPassword.length < 6) {
@@ -537,7 +537,7 @@ export default function Configuracion({ navigation }) {
                 <TextInput
                   value={confirmPassword}
                   onChangeText={(t) => { setConfirmPassword(t); setError(''); setSuccessMsg(''); }}
-                  placeholder="Repetí la nueva contraseña"
+                  placeholder="Repite la nueva contraseña"
                   placeholderTextColor={colors.textTertiary}
                   secureTextEntry
                   style={dynamicStyles.input}
@@ -640,7 +640,7 @@ export default function Configuracion({ navigation }) {
               <Text style={[styles.disclaimerTitle, { color: colors.text }]}>Exención de responsabilidad</Text>
               <Text style={[styles.disclaimerText, { color: colors.textSecondary }]}>
                 La información proporcionada por esta aplicación es de carácter orientativo y no sustituye
-                la consulta con un profesional de la salud. Ante cualquier duda, consultá a tu médico.
+                la consulta con un profesional de la salud. Ante cualquier duda, consulta a tu médico.
               </Text>
             </View>
           </View>
@@ -668,7 +668,7 @@ export default function Configuracion({ navigation }) {
           <SafeAreaView style={styles.modalSafeArea}>
             <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
               <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Elegí tu icono</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Elige tu icono</Text>
                 <TouchableOpacity
                   style={[styles.modalClose, { backgroundColor: colors.surfaceAlt }]}
                   onPress={() => setShowAvatarModal(false)}
