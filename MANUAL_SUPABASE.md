@@ -29,23 +29,14 @@ Copiar y ejecutar este SQL en el SQL Editor de Supabase:
 
 ```sql
 -- ============================================
--- TABLA: usuario
+-- NOTA: auth.users es manejada internamente por Supabase
 -- ============================================
-CREATE TABLE usuario (
-    id_usuario      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(255) NOT NULL UNIQUE,
-    password_hash   VARCHAR(255) NOT NULL,
-    nombre_completo VARCHAR(255) NOT NULL,
-    fecha_creacion  TIMESTAMP NOT NULL DEFAULT NOW(),
-    avatar_icon     VARCHAR(50) DEFAULT 'heart',
-    avatar_color    VARCHAR(20) DEFAULT '#EB5D8B'
-);
 
 -- ============================================
 -- TABLA: perfil_madre
 -- ============================================
 CREATE TABLE perfil_madre (
-    id_usuario     UUID PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario     UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     fecha_nac      DATE,
     fecha_fur      DATE,
     fecha_nac_bebe DATE
@@ -56,7 +47,7 @@ CREATE TABLE perfil_madre (
 -- ============================================
 CREATE TABLE biometria_madre (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_usuario           UUID NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     fecha_registro       DATE NOT NULL,
     peso                 FLOAT,
     horas_suenio         INT,
@@ -79,7 +70,7 @@ CREATE TABLE biometria_madre (
 -- ============================================
 CREATE TABLE metricas_bebe (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_usuario           UUID NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     fecha_registro       DATE NOT NULL,
     movimiento_fetal     BOOLEAN DEFAULT FALSE,
     cambio_intensidad    BOOLEAN DEFAULT FALSE,
@@ -96,13 +87,13 @@ CREATE TABLE metricas_bebe (
 -- TABLA: perfil_bebe
 -- ============================================
 CREATE TABLE perfil_bebe (
-    id_usuario     UUID PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario     UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nombre         VARCHAR(255),
     sexo           VARCHAR(20),
     fecha_nac      DATE,
     peso_nac       FLOAT,
     talla_nac      FLOAT,
-    creado_en      TIMESTAMP DEFAULT NOW()
+    fecha_creacion TIMESTAMP DEFAULT NOW()
 );
 
 -- ============================================
@@ -110,28 +101,26 @@ CREATE TABLE perfil_bebe (
 -- ============================================
 CREATE TABLE registro_tarea (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_usuario          UUID NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     titulo              VARCHAR(255) NOT NULL,
     descripcion         TEXT,
     fecha_hora          TIMESTAMP NOT NULL,
-    tipo                VARCHAR(50) DEFAULT 'task',
     finalizada          BOOLEAN DEFAULT FALSE,
-    id_calendario_ext   VARCHAR(255),
-    creado_en           TIMESTAMP DEFAULT NOW()
+    id_calendario_ext   VARCHAR(255)
 );
 
 -- ============================================
--- TABLA: recordatorios_config
+-- TABLA: configuracion_recordatorios
 -- ============================================
-CREATE TABLE recordatorios_config (
-    id_usuario              UUID PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
-    enabled                 BOOLEAN DEFAULT TRUE,
-    biometric_reminder      BOOLEAN DEFAULT TRUE,
-    biometric_time          TIME DEFAULT '20:00',
-    baby_reminder           BOOLEAN DEFAULT TRUE,
-    baby_time               TIME DEFAULT '21:00',
-    calendar_reminder       BOOLEAN DEFAULT TRUE,
-    calendar_hours_before   INT DEFAULT 2
+CREATE TABLE configuracion_recordatorios (
+    id_usuario                      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    notificaciones_activadas        BOOLEAN DEFAULT TRUE,
+    recordatorio_biometria          BOOLEAN DEFAULT TRUE,
+    hora_biometria                  TIME DEFAULT '20:00',
+    recordatorio_bebe               BOOLEAN DEFAULT TRUE,
+    hora_bebe                       TIME DEFAULT '21:00',
+    recordatorio_calendario         BOOLEAN DEFAULT TRUE,
+    horas_anticipacion_calendario   INT DEFAULT 2
 );
 
 -- ============================================
@@ -140,7 +129,6 @@ CREATE TABLE recordatorios_config (
 CREATE INDEX idx_biometria_usuario_fecha ON biometria_madre(id_usuario, fecha_registro);
 CREATE INDEX idx_metricas_usuario_fecha ON metricas_bebe(id_usuario, fecha_registro);
 CREATE INDEX idx_tareas_usuario_fecha ON registro_tarea(id_usuario, fecha_hora);
-CREATE INDEX idx_usuario_email ON usuario(email);
 ```
 
 ---
@@ -215,13 +203,9 @@ export const register = async ({ fullName, email, password }) => {
   });
   if (error) return { success: false, message: error.message };
 
-  // Crear perfil en tabla usuario
-  await supabase.from('usuario').insert({
-    id_usuario: data.user.id,
-    email,
-    password_hash: '***', // Supabase Auth maneja passwords
-    nombre_completo: fullName,
-  });
+  // Ya no se hace insert a la tabla 'usuario' ya que Supabase maneja auth.users internamente.
+  // Cualquier actualizacion de perfil debe usar:
+  // supabase.auth.updateUser({ data: { nombre_completo: nuevoNombre } })
 
   return { success: true };
 };
@@ -308,7 +292,7 @@ export const addEvent = async (event, userId) => {
       titulo: event.title,
       descripcion: event.description,
       fecha_hora: `${event.date}T${event.time || '00:00'}:00`,
-      tipo: event.type,
+      finalizada: false
     })
     .select()
     .single();
@@ -331,7 +315,7 @@ export const getEvents = async (userId) => {
     description: row.descripcion,
     date: row.fecha_hora.split('T')[0],
     time: row.fecha_hora.split('T')[1]?.substring(0, 5),
-    type: row.tipo,
+    finalizada: row.finalizada,
   }));
 };
 ```
@@ -342,14 +326,14 @@ export const getEvents = async (userId) => {
 
 | AsyncStorage Key | Tabla Supabase | Columnas |
 |---|---|---|
-| `@manualdelbebe_profile` | `usuario` | id_usuario, email, password_hash, nombre_completo, avatar_icon, avatar_color |
+| `@manualdelbebe_profile` | `auth.users` | id, email, encrypted_password, raw_user_meta_data |
 | `@manualdelbebe_session` | `supabase.auth` | (manejado por Supabase Auth) |
-| `@manualdelbebe_profile` (campos extra) | `perfil_madre` | fecha_nac, fecha_fur, fecha_nac_bebe |
+| `@manualdelbebe_profile` (campos extra) | `perfil_madre` | id_usuario, fecha_nac, fecha_fur, fecha_nac_bebe |
 | `@biometric_data_YYYY-MM-DD` | `biometria_madre` | id_usuario, fecha_registro, peso, horas_suenio, presion_*, sintomas_* |
-| `@baby_data_YYYY-MM-DD` | `metricas_bebe` | id_usuario, fecha_registro, movimiento_fetal, cambio_intensidad, sintomas_* |
-| `@baby_profile` | `perfil_bebe` | nombre, sexo, fecha_nac, peso_nac, talla_nac |
-| `@calendar_events` | `registro_tarea` | titulo, descripcion, fecha_hora, tipo |
-| `@reminders_config` | `recordatorios_config` | enabled, biometric_reminder, biometric_time, baby_* |
+| `@baby_data_YYYY-MM-DD` | `metricas_bebe` | id_usuario, fecha_registro, movimiento_fetal, cambio_intensidad, alteraciones_piel, sintomas_* |
+| `@baby_profile` | `perfil_bebe` | id_usuario, nombre, sexo, fecha_nac, peso_nac, talla_nac |
+| `@calendar_events` | `registro_tarea` | id_usuario, titulo, descripcion, fecha_hora, finalizada |
+| `@reminders_config` | `configuracion_recordatorios` | id_usuario, notificaciones_activadas, recordatorio_biometria, hora_biometria, recordatorio_bebe, hora_bebe, recordatorio_calendario, horas_anticipacion_calendario |
 | `@manualdelbebe_theme` | `usuario` (o local) | Preferencia local (no necesita BD) |
 
 ---

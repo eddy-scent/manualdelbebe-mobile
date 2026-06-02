@@ -12,13 +12,13 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                                                                     │
 │                           ┌──────────────┐                          │
-│                           │   USUARIO    │                          │
+│                           │  auth.users  │                          │
 │                           │──────────────│                          │
-│                           │ PK id_usuario│                          │
+│                           │ PK id        │                          │
 │                           │    email     │                          │
-│                           │    password  │                          │
-│                           │    nombre    │                          │
-│                           │    f_creacion│                          │
+│                           │    encrypted_password                   │                          │
+│                           │ raw_user_meta_data (json)               │                          │
+│                           │    created_at│                          │
 │                           └──────┬───────┘                          │
 │                                  │                                  │
 │                ┌─────────────────┼─────────────────┐                │
@@ -28,14 +28,14 @@
 │     │ PERFIL_MADRE │  │BIOMETRIA_MADRE│ │METRICAS_BEBE │          │
 │     │──────────────│  │──────────────│  │──────────────│          │
 │     │ FK id_usuario│  │ FK id_usuario│  │ FK id_usuario│          │
-│     │    fecha_nac │  │    fecha_reg │  │    fecha_reg │          │
+│     │    fecha_nac │  │ fecha_registro│ │fecha_registro│          │
 │     │    fecha_fur │  │    peso      │  │ mov_fetal    │          │
-│     │ fecha_nac_bb │  │    suenio    │  │ intensidad   │          │
-│     │  etapa (der.)│  │    presion   │  │ llanto       │          │
-│     └──────────────┘  │    sintomas  │  │ rechazo      │          │
+│     │ fecha_nac_bebe│ │ horas_suenio │  │ intensidad   │          │
+│     │              │  │ presion_sist.│  │ llanto       │          │
+│     └──────────────┘  │ presion_diast│  │ rechazo      │          │
 │          1:1          └──────────────┘  │ suenio       │          │
 │                               1:N       │ fiebre       │          │
-│                                         │ piel         │          │
+│                                         │ alteraciones_piel       │          │
 │                                         └──────────────┘          │
 │                              │                 1:N                 │
 │                              │                                     │
@@ -45,9 +45,10 @@
 │                     │──────────────│                               │
 │                     │ FK id_usuario│                               │
 │                     │    titulo    │                               │
+│                     │    descripcion|                               │
 │                     │    fecha_hora│                               │
 │                     │  finalizada  │                               │
-│                     │ id_cal_ext   │                               │
+│                     │ id_calendario_ext|                           │
 │                     └──────────────┘                               │
 │                              1:N                                   │
 │                                                                     │
@@ -58,39 +59,31 @@
 
 ## Entidad Fuerte
 
-### `usuario`
+### `auth.users`
 
-Entidad principal. Todas las demás tablas dependen de ella.
+Entidad principal interna manejada por Supabase Auth. Todas las demás tablas dependen de ella.
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
-| `id_usuario` | `uuid` | **PK**, NOT NULL | Identificador único universal |
+| `id` | `uuid` | **PK**, NOT NULL | Identificador único universal |
 | `email` | `varchar` | **UNIQUE**, NOT NULL | Correo electrónico (login) |
-| `password_hash` | `varchar` | NOT NULL | Contraseña hasheada (bcrypt en producción) |
-| `nombre_completo` | `varchar` | NOT NULL | Nombre de la usuaria |
-| `fecha_creacion` | `timestamp` | NOT NULL, DEFAULT NOW() | Fecha de registro |
+| `encrypted_password` | `varchar` | NOT NULL | Contraseña hasheada internamente |
+| `raw_user_meta_data` | `jsonb` | | Campo JSON donde se guarda el `nombre_completo` |
+| `created_at` | `timestamp` | NOT NULL, DEFAULT NOW() | Fecha de registro |
 
-```sql
-CREATE TABLE usuario (
-    id_usuario      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(255) NOT NULL UNIQUE,
-    password_hash   VARCHAR(255) NOT NULL,
-    nombre_completo VARCHAR(255) NOT NULL,
-    fecha_creacion  TIMESTAMP NOT NULL DEFAULT NOW()
-);
-```
+*(No se requiere CREATE TABLE ya que Supabase maneja auth.users internamente)*
 
 ---
 
-## Entidades Débiles (dependientes de `usuario`)
+## Entidades Débiles (dependientes de `auth.users`)
 
 ### `perfil_madre`
 
-Perfil obstétrico de la usuaria. Relación **1:1** con `usuario`.
+Perfil obstétrico de la usuaria. Relación **1:1** con `auth.users`.
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
-| `id_usuario` | `uuid` | **PK**, **FK** → `usuario(id_usuario)` | Vincula al usuario |
+| `id_usuario` | `uuid` | **PK**, **FK** → `auth.users(id)` | Vincula al usuario |
 | `fecha_nac` | `date` | NULLABLE | Fecha de nacimiento de la madre |
 | `fecha_fur` | `date` | NULLABLE | Fecha de Última Regla (base para cálculos) |
 | `fecha_nac_bebe` | `date` | NULLABLE | Fecha de nacimiento del bebé |
@@ -102,7 +95,7 @@ Perfil obstétrico de la usuaria. Relación **1:1** con `usuario`.
 
 ```sql
 CREATE TABLE perfil_madre (
-    id_usuario     UUID PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario     UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     fecha_nac      DATE,
     fecha_fur      DATE,
     fecha_nac_bebe DATE
@@ -113,12 +106,12 @@ CREATE TABLE perfil_madre (
 
 ### `biometria_madre`
 
-Registro diario de datos biométricos y síntomas maternos. Relación **1:N** con `usuario` (un registro por día).
+Registro diario de datos biométricos y síntomas maternos. Relación **1:N** con `auth.users` (un registro por día).
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
 | `id` | `uuid` | **PK** | Identificador del registro |
-| `id_usuario` | `uuid` | **FK** → `usuario(id_usuario)`, NOT NULL | Dueña del registro |
+| `id_usuario` | `uuid` | **FK** → `auth.users(id)`, NOT NULL | Dueña del registro |
 | `fecha_registro` | `date` | NOT NULL | Día del registro |
 | `peso` | `float` | NULLABLE | Peso en kg |
 | `horas_suenio` | `int` | NULLABLE | Horas de sueño |
@@ -139,7 +132,7 @@ Registro diario de datos biométricos y síntomas maternos. Relación **1:N** co
 ```sql
 CREATE TABLE biometria_madre (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_usuario           UUID NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     fecha_registro       DATE NOT NULL,
     peso                 FLOAT,
     horas_suenio         INT,
@@ -163,12 +156,12 @@ CREATE TABLE biometria_madre (
 
 ### `metricas_bebe`
 
-Registro de síntomas y métricas del bebé (pre-parto y post-parto). Relación **1:N** con `usuario`.
+Registro de síntomas y métricas del bebé (pre-parto y post-parto). Relación **1:N** con `auth.users`.
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
 | `id` | `uuid` | **PK** | Identificador del registro |
-| `id_usuario` | `uuid` | **FK** → `usuario(id_usuario)`, NOT NULL | Dueña del registro |
+| `id_usuario` | `uuid` | **FK** → `auth.users(id)`, NOT NULL | Dueña del registro |
 | `fecha_registro` | `date` | NOT NULL | Día del registro |
 | `movimiento_fetal` | `boolean` | DEFAULT FALSE | Pre-parto: movimiento fetal activo |
 | `cambio_intensidad` | `boolean` | DEFAULT FALSE | Pre-parto: cambio de intensidad |
@@ -184,7 +177,7 @@ Registro de síntomas y métricas del bebé (pre-parto y post-parto). Relación 
 ```sql
 CREATE TABLE metricas_bebe (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_usuario           UUID NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario           UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     fecha_registro       DATE NOT NULL,
     movimiento_fetal     BOOLEAN DEFAULT FALSE,
     cambio_intensidad    BOOLEAN DEFAULT FALSE,
@@ -203,12 +196,12 @@ CREATE TABLE metricas_bebe (
 
 ### `registro_tarea`
 
-Tareas, citas médicas e hitos del calendario. Relación **1:N** con `usuario`.
+Tareas, citas médicas e hitos del calendario. Relación **1:N** con `auth.users`.
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
 | `id` | `uuid` | **PK** | Identificador de la tarea |
-| `id_usuario` | `uuid` | **FK** → `usuario(id_usuario)`, NOT NULL | Dueña de la tarea |
+| `id_usuario` | `uuid` | **FK** → `auth.users(id)`, NOT NULL | Dueña de la tarea |
 | `titulo` | `varchar` | NOT NULL | Título de la tarea/cita |
 | `descripcion` | `text` | NULLABLE | Detalle opcional |
 | `fecha_hora` | `timestamp` | NOT NULL | Fecha y hora del evento |
@@ -218,7 +211,7 @@ Tareas, citas médicas e hitos del calendario. Relación **1:N** con `usuario`.
 ```sql
 CREATE TABLE registro_tarea (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    id_usuario          UUID NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    id_usuario          UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     titulo              VARCHAR(255) NOT NULL,
     descripcion         TEXT,
     fecha_hora          TIMESTAMP NOT NULL,
@@ -231,57 +224,57 @@ CREATE TABLE registro_tarea (
 
 ### `perfil_bebe`
 
-Perfil del bebé (registro inicial). Relación **1:1** con `usuario`.
+Perfil del bebé (registro inicial). Relación **1:1** con `auth.users`.
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
-| `id_usuario` | `uuid` | **PK**, **FK** → `usuario(id_usuario)` | Vincula al usuario |
+| `id_usuario` | `uuid` | **PK**, **FK** → `auth.users(id)` | Vincula al usuario |
 | `nombre` | `varchar` | NULLABLE | Nombre del bebé |
 | `sexo` | `varchar` | NULLABLE | 'masculino' o 'femenino' |
 | `fecha_nac` | `date` | NULLABLE | Fecha de nacimiento |
 | `peso_nac` | `float` | NULLABLE | Peso al nacer (kg) |
 | `talla_nac` | `float` | NULLABLE | Talla al nacer (cm) |
-| `creado_en` | `timestamp` | DEFAULT NOW() | Fecha de registro |
+| `fecha_creacion` | `timestamp` | DEFAULT NOW() | Fecha de registro |
 
 ```sql
 CREATE TABLE perfil_bebe (
-    id_usuario  UUID PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
-    nombre      VARCHAR(255),
-    sexo        VARCHAR(20),
-    fecha_nac   DATE,
-    peso_nac    FLOAT,
-    talla_nac   FLOAT,
-    creado_en   TIMESTAMP DEFAULT NOW()
+    id_usuario      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    nombre          VARCHAR(255),
+    sexo            VARCHAR(20),
+    fecha_nac       DATE,
+    peso_nac        FLOAT,
+    talla_nac       FLOAT,
+    fecha_creacion  TIMESTAMP DEFAULT NOW()
 );
 ```
 
 ---
 
-### `recordatorios_config`
+### `configuracion_recordatorios`
 
-Configuración de recordatorios/notificaciones. Relación **1:1** con `usuario`.
+Configuración de recordatorios/notificaciones. Relación **1:1** con `auth.users`.
 
 | Columna | Tipo | Restricciones | Descripción |
 |---|---|---|---|
-| `id_usuario` | `uuid` | **PK**, **FK** → `usuario(id_usuario)` | Vincula al usuario |
-| `enabled` | `boolean` | DEFAULT TRUE | Master toggle de notificaciones |
-| `biometric_reminder` | `boolean` | DEFAULT TRUE | Recordatorio biométricos diarios |
-| `biometric_time` | `time` | DEFAULT '20:00' | Hora del recordatorio biométricos |
-| `baby_reminder` | `boolean` | DEFAULT TRUE | Recordatorio datos del bebé |
-| `baby_time` | `time` | DEFAULT '21:00' | Hora del recordatorio bebé |
-| `calendar_reminder` | `boolean` | DEFAULT TRUE | Aviso antes de citas médicas |
-| `calendar_hours_before` | `int` | DEFAULT 2 | Horas de anticipación |
+| `id_usuario` | `uuid` | **PK**, **FK** → `auth.users(id)` | Vincula al usuario |
+| `notificaciones_activadas` | `boolean` | DEFAULT TRUE | Master toggle de notificaciones |
+| `recordatorio_biometria` | `boolean` | DEFAULT TRUE | Recordatorio biométricos diarios |
+| `hora_biometria` | `time` | DEFAULT '20:00' | Hora del recordatorio biométricos |
+| `recordatorio_bebe` | `boolean` | DEFAULT TRUE | Recordatorio datos del bebé |
+| `hora_bebe` | `time` | DEFAULT '21:00' | Hora del recordatorio bebé |
+| `recordatorio_calendario` | `boolean` | DEFAULT TRUE | Aviso antes de citas médicas |
+| `horas_anticipacion_calendario` | `int` | DEFAULT 2 | Horas de anticipación |
 
 ```sql
-CREATE TABLE recordatorios_config (
-    id_usuario              UUID PRIMARY KEY REFERENCES usuario(id_usuario) ON DELETE CASCADE,
-    enabled                 BOOLEAN DEFAULT TRUE,
-    biometric_reminder      BOOLEAN DEFAULT TRUE,
-    biometric_time          TIME DEFAULT '20:00',
-    baby_reminder           BOOLEAN DEFAULT TRUE,
-    baby_time               TIME DEFAULT '21:00',
-    calendar_reminder       BOOLEAN DEFAULT TRUE,
-    calendar_hours_before   INT DEFAULT 2
+CREATE TABLE configuracion_recordatorios (
+    id_usuario                      UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    notificaciones_activadas        BOOLEAN DEFAULT TRUE,
+    recordatorio_biometria          BOOLEAN DEFAULT TRUE,
+    hora_biometria                  TIME DEFAULT '20:00',
+    recordatorio_bebe               BOOLEAN DEFAULT TRUE,
+    hora_bebe                       TIME DEFAULT '21:00',
+    recordatorio_calendario         BOOLEAN DEFAULT TRUE,
+    horas_anticipacion_calendario   INT DEFAULT 2
 );
 ```
 
@@ -290,27 +283,27 @@ CREATE TABLE recordatorios_config (
 ## Resumen de Relaciones
 
 ```
-usuario ──────1:1────── perfil_madre
-   │
-   ├──────────1:1────── perfil_bebe
-   │
-   ├──────────1:1────── recordatorios_config
-   │
-   ├──────────1:N────── biometria_madre
-   │
-   ├──────────1:N────── metricas_bebe
-   │
-   └──────────1:N────── registro_tarea
+auth.users ───1:1────── perfil_madre
+    │
+    ├─────────1:1────── perfil_bebe
+    │
+    ├─────────1:1────── configuracion_recordatorios
+    │
+    ├─────────1:N────── biometria_madre
+    │
+    ├─────────1:N────── metricas_bebe
+    │
+    └─────────1:N────── registro_tarea
 ```
 
 | Relación | Tipo | Descripción |
 |---|---|---|
-| `usuario` → `perfil_madre` | 1:1 | Una madre tiene un solo perfil obstétrico |
-| `usuario` → `perfil_bebe` | 1:1 | Una madre tiene un solo perfil de bebé |
-| `usuario` → `recordatorios_config` | 1:1 | Una madre tiene una configuración de recordatorios |
-| `usuario` → `biometria_madre` | 1:N | Una madre registra biométricos muchos días |
-| `usuario` → `metricas_bebe` | 1:N | Una madre registra métricas del bebé muchos días |
-| `usuario` → `registro_tarea` | 1:N | Una madre tiene muchas tareas/citas |
+| `auth.users` → `perfil_madre` | 1:1 | Una madre tiene un solo perfil obstétrico |
+| `auth.users` → `perfil_bebe` | 1:1 | Una madre tiene un solo perfil de bebé |
+| `auth.users` → `configuracion_recordatorios` | 1:1 | Una madre tiene una configuración de recordatorios |
+| `auth.users` → `biometria_madre` | 1:N | Una madre registra biométricos muchos días |
+| `auth.users` → `metricas_bebe` | 1:N | Una madre registra métricas del bebé muchos días |
+| `auth.users` → `registro_tarea` | 1:N | Una madre tiene muchas tareas/citas |
 
 ---
 
@@ -336,10 +329,10 @@ CREATE INDEX idx_usuario_email ON usuario(email);
 
 | Tabla BD | Servicio Actual | Almacenamiento Actual |
 |---|---|---|
-| `usuario` | `authService.js` | AsyncStorage (`@manualdelbebe_profile`) |
+| `auth.users` | `authService.js` | AsyncStorage (`@manualdelbebe_profile`) |
 | `perfil_madre` | `authService.js` (campos en perfil) | AsyncStorage (dentro del perfil) |
 | `perfil_bebe` | `babyService.js` | AsyncStorage (`@baby_profile`) |
-| `recordatorios_config` | `notificationService.js` | AsyncStorage (`@reminders_config`) |
+| `configuracion_recordatorios` | `notificationService.js` | AsyncStorage (`@reminders_config`) |
 | `biometria_madre` | `biometricService.js` | AsyncStorage (`@biometric_data_YYYY-MM-DD`) |
 | `metricas_bebe` | `babyService.js` | AsyncStorage (`@baby_data_YYYY-MM-DD`) |
 | `registro_tarea` | `calendarService.js` | AsyncStorage (`@calendar_events`) |

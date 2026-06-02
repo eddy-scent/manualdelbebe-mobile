@@ -9,7 +9,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
-import { User, Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight } from 'lucide-react-native';
+import { User, Mail, Lock, Eye, EyeOff, Sparkles, ArrowRight, CheckSquare, Square } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { isValidEmail, isValidDate, formatDateInput } from '../utils/validators';
@@ -26,6 +26,7 @@ export default function Registro({ navigation }) {
   const [babyDate, setBabyDate] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleDateBlur = (value, setter) => {
     const digits = value.replace(/\D/g, '');
@@ -36,6 +37,13 @@ export default function Registro({ navigation }) {
 
   const handleRegister = async () => {
     setError('');
+
+    if (!acceptedTerms) {
+      import('react-native').then(({ Alert }) => {
+        Alert.alert('Exención de responsabilidad', 'Debe aceptar la exención de responsabilidad para continuar.');
+      });
+      return;
+    }
 
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
@@ -208,7 +216,24 @@ export default function Registro({ navigation }) {
                 </View>
               </View>
 
-              <TouchableOpacity style={[styles.submitButton, { backgroundColor: colors.primary }]} onPress={handleRegister} activeOpacity={0.85} disabled={loading}>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 16, marginBottom: 8 }}
+                onPress={() => setAcceptedTerms(!acceptedTerms)}
+                activeOpacity={0.8}
+              >
+                <View style={{ marginRight: 10, marginTop: 2 }}>
+                  {acceptedTerms ? (
+                    <CheckSquare size={20} color={colors.primary} />
+                  ) : (
+                    <Square size={20} color={colors.textTertiary} />
+                  )}
+                </View>
+                <Text style={{ flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 }}>
+                  Comprendo que esta aplicación es una herramienta de apoyo y registro, y en ningún caso reemplaza el diagnóstico, consejo o tratamiento de un profesional médico.
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.submitButton, { backgroundColor: colors.primary, opacity: acceptedTerms ? 1 : 0.5 }]} onPress={handleRegister} activeOpacity={0.85} disabled={loading || !acceptedTerms}>
                 {loading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
