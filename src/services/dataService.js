@@ -6,7 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Configuración del proveedor de datos ─────────────
-// Cambiar a 'supabase' cuando se integre la BD real
+// Cambiar a 'supabase' cuando se integre la BD real IMPORTANTE
 const DATA_PROVIDER = 'asyncstorage';
 
 // ─── Helper: ejecutar según proveedor ─────────────────

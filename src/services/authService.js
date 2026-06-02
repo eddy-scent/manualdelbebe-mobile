@@ -4,6 +4,18 @@
 // ──────────────────────────────────────────────────────────
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { STORAGE_KEYS } from '../utils/constants';
+import { supabase } from './supabaseClient';
+
+const formatearFechaBD = (fechaStr) => {
+  if (!fechaStr) return null;
+  if (fechaStr.includes('-')) return fechaStr;
+  const partes = fechaStr.split('/');
+  if (partes.length === 3) {
+    const [dia, mes, anio] = partes;
+    return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  }
+  return fechaStr;
+};
 
 /**
  * Registra una nueva usuaria.
@@ -12,45 +24,27 @@ import { STORAGE_KEYS } from '../utils/constants';
  */
 export const register = async ({ fullName, email, password, birthDate, furDate, babyDate }) => {
   try {
-    // Verificar si el correo ya está registrado
-    const existing = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    if (existing) {
-      const profiles = JSON.parse(existing);
-      if (Array.isArray(profiles) && profiles.some(p => p.email === email.trim().toLowerCase())) {
-        return { success: false, message: 'Ya existe una cuenta con este correo electrónico.' };
-      }
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { nombre_completo: fullName },
+      },
+    });
+    if (error) return { success: false, message: error.message };
 
-    const newProfile = {
-      id: Date.now().toString(),
-      fullName: fullName.trim(),
-      email: email.trim().toLowerCase(),
-      password, // En producción esto iría hasheado
-      birthDate: birthDate || null,
-      furDate: furDate || null,
-      babyDate: babyDate || null,
-      avatarIcon: 'heart',
-      avatarColor: '#EB5D8B',
-      createdAt: new Date().toISOString(),
-    };
+    const fecha_nac = formatearFechaBD(birthDate);
+    const fecha_fur = formatearFechaBD(furDate);
+    const fecha_nac_bebe = formatearFechaBD(babyDate);
 
-    // Guardar perfil
-    let profiles = [];
-    const stored = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    if (stored) profiles = JSON.parse(stored);
-    profiles.push(newProfile);
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profiles));
+    const { error: profileError } = await supabase.from('perfil_madre').insert({
+      id_usuario: data.user.id,
+      fecha_nac,
+      fecha_fur,
+      fecha_nac_bebe
+    });
 
-    // Crear sesión automáticamente
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify({
-      id: newProfile.id,
-      email: newProfile.email,
-      fullName: newProfile.fullName,
-      furDate: newProfile.furDate,
-      avatarIcon: newProfile.avatarIcon,
-      avatarColor: newProfile.avatarColor,
-      loggedInAt: new Date().toISOString(),
-    }));
+    if (profileError) return { success: false, message: profileError.message };
 
     return { success: true, message: 'Cuenta creada exitosamente.' };
   } catch (error) {
@@ -65,36 +59,13 @@ export const register = async ({ fullName, email, password, birthDate, furDate, 
  */
 export const login = async ({ email, password }) => {
   try {
-    const stored = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    if (!stored) {
-      return { success: false, message: 'No hay cuentas registradas. Creá una cuenta primero.' };
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) return { success: false, message: error.message };
 
-    const profiles = JSON.parse(stored);
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = profiles.find(p => p.email === normalizedEmail);
-
-    if (!user) {
-      return { success: false, message: 'No existe una cuenta con este correo electrónico.' };
-    }
-
-    if (user.password !== password) {
-      return { success: false, message: 'Contraseña incorrecta.' };
-    }
-
-    // Crear sesión
-    const session = {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      furDate: user.furDate,
-      avatarIcon: user.avatarIcon || 'heart',
-      avatarColor: user.avatarColor || '#EB5D8B',
-      loggedInAt: new Date().toISOString(),
-    };
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(session));
-
-    return { success: true, message: 'Inicio de sesión exitoso.', user: session };
+    return { success: true, message: 'Inicio de sesión exitoso.', user: data.user };
   } catch (error) {
     return { success: false, message: 'Error al iniciar sesión. Inténtalo de nuevo.' };
   }
