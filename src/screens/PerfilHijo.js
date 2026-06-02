@@ -99,11 +99,11 @@ export default function PerfilHijo({ navigation }) {
     setBabyDateError('');
 
     if (!babyDateInput.trim()) {
-      setBabyDateError('Ingresá la fecha de nacimiento del bebé.');
+      setBabyDateError('Ingresa la fecha de nacimiento del bebé.');
       return;
     }
     if (!isValidDate(babyDateInput)) {
-      setBabyDateError('La fecha no es válida. Usá el formato DD/MM/AAAA.');
+      setBabyDateError('La fecha no es válida. Usa el formato DD/MM/AAAA.');
       return;
     }
 
@@ -231,7 +231,7 @@ export default function PerfilHijo({ navigation }) {
         {!loadingProfile && !babyProfile && etapa !== 'desconocida' && (
           <View style={[styles.warningCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
             <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-              Todavía no registraste los datos de tu bebé. Completá la información inicial para hacer un mejor seguimiento.
+              Todavía no registraste los datos de tu bebé. Completa la información inicial para hacer un mejor seguimiento.
             </Text>
             <TouchableOpacity
               style={[styles.warningButton, { backgroundColor: colors.primary }]}
@@ -250,7 +250,7 @@ export default function PerfilHijo({ navigation }) {
               Fecha de nacimiento del bebé
             </Text>
             <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-              Ingresá la fecha de nacimiento de tu bebé para acceder al seguimiento.
+              Ingresa la fecha de nacimiento de tu bebé para acceder al seguimiento.
             </Text>
 
             {babyDateError ? (
@@ -300,7 +300,7 @@ export default function PerfilHijo({ navigation }) {
                 <Text style={[styles.cardTitle, { color: colors.text }]}>Registro de hoy</Text>
               </View>
               <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
-                Seleccioná las opciones que apliquen al movimiento fetal de hoy.
+                Selecciona las opciones que apliquen al movimiento fetal de hoy.
               </Text>
               <View style={styles.checkboxContainer}>
                 {MOVIMIENTOS_FETALES.map((nombre, index) =>
@@ -366,7 +366,7 @@ export default function PerfilHijo({ navigation }) {
                 <Text style={[styles.cardTitle, { color: colors.text }]}>Síntomas de hoy</Text>
               </View>
               <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
-                Seleccioná los síntomas que presente el bebé hoy.
+                Selecciona los síntomas que presente el bebé hoy.
               </Text>
               <View style={styles.checkboxContainer}>
                 {SINTOMAS_INFANTIL_POSTPARTO.map((nombre, index) =>

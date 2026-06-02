@@ -90,8 +90,10 @@ MainTabs
 ```
 Menu
 │
-├── [Sin datos] Card progreso
-│   └── → Configuracion  (boton "Configurar perfil")
+├── [Sin datos] Setup flow
+│   ├── "Estoy embarazada" → input FUR → updateProfile → pre_parto
+│   ├── "Ya tengo un bebe" → input fecha → updateProfile → post_parto
+│   └── "Ninguna por ahora" → Configuracion
 │
 ├── [Pre-parto] Card progreso
 │   └── (sin navegacion, solo muestra datos)
@@ -188,6 +190,12 @@ Configuracion
 │   ├── Password nueva   → TextInput
 │   └── "Guardar"        → authService.updateProfile()
 │
+├── Mi Situacion
+│   ├── Estoy embarazada → input FUR → updateProfile({ furDate })
+│   ├── Ya tengo un bebe → input fecha → updateProfile({ babyDate })
+│   ├── Ninguna por ahora → limpia furDate y babyDate
+│   └── "Guardar situacion" → EtapaContext.refresh()
+│
 ├── Apariencia
 │   ├── Modo Claro       → ThemeContext.setLightTheme()
 │   └── Modo Oscuro      → ThemeContext.setDarkTheme()
@@ -201,6 +209,7 @@ Configuracion
 **Que pasa al conectar BD:**
 - Guardar perfil → `supabase.auth.updateUser()` para actualizar `nombre_completo`
 - Password → `supabase.auth.updateUser({ password })`
+- Situacion → `supabase.from('perfil_madre').upsert()` con fecha_fur o fecha_nac_bebe
 
 ---
 

@@ -105,9 +105,9 @@ export default function Perfil({ navigation }) {
             onPress={() => navigation.navigate('Configuracion')}
             activeOpacity={0.85}
           >
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Completá tu perfil</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Completa tu perfil</Text>
             <Text style={[styles.menuDesc, { color: colors.textTertiary }]}>
-              Configurá tu fecha de última regla o la fecha de nacimiento de tu bebé para acceder al seguimiento.
+              Configura tu fecha de última regla o la fecha de nacimiento de tu bebé para acceder al seguimiento.
             </Text>
             <View style={[styles.setupLink, { marginTop: 12 }]}>
               <Text style={[styles.setupLinkText, { color: colors.primary }]}>Ir a Configuración</Text>

@@ -38,7 +38,8 @@ import {
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { isValidEmail, isValidName } from '../utils/validators';
+import { useEtapa } from '../context/EtapaContext';
+import { isValidEmail, isValidName, formatDateInput, isValidDate } from '../utils/validators';
 
 // Iconos predefinidos para el avatar
 const AVATAR_ICONS = [
@@ -58,6 +59,7 @@ const AVATAR_COLORS = [
 export default function Configuracion({ navigation }) {
   const { user, updateProfile, updatePassword, logout } = useAuth();
   const { theme, colors, isDark, toggleTheme } = useTheme();
+  const { etapa, refresh } = useEtapa();
 
   // ─── Estado del formulario de perfil ───
   const [fullName, setFullName] = useState(user?.fullName || '');
@@ -76,6 +78,12 @@ export default function Configuracion({ navigation }) {
   const [selectedColor, setSelectedColor] = useState(user?.avatarColor || '#EB5D8B');
   const [showAvatarModal, setShowAvatarModal] = useState(false);
 
+  // ─── Estado de situación ───
+  const [situacion, setSituacion] = useState(etapa === 'pre_parto' ? 'embarazada' : etapa === 'post_parto' ? 'bebe' : 'ninguna');
+  const [situacionDate, setSituacionDate] = useState('');
+  const [situacionError, setSituacionError] = useState('');
+  const [situacionSaving, setSituacionSaving] = useState(false);
+
   // Sincronizar datos del usuario cuando cambie
   useEffect(() => {
     if (user) {
@@ -85,6 +93,13 @@ export default function Configuracion({ navigation }) {
       setSelectedColor(user.avatarColor || '#EB5D8B');
     }
   }, [user]);
+
+  // Sincronizar situación con etapa
+  useEffect(() => {
+    if (etapa === 'pre_parto') setSituacion('embarazada');
+    else if (etapa === 'post_parto') setSituacion('bebe');
+    else setSituacion('ninguna');
+  }, [etapa]);
 
   // ─── Guardar perfil ───
   const handleSaveProfile = async () => {
@@ -99,14 +114,14 @@ export default function Configuracion({ navigation }) {
 
     // Validar email
     if (!isValidEmail(email)) {
-      setError('Ingresá un correo electrónico válido.');
+      setError('Ingresa un correo electrónico válido.');
       return;
     }
 
     // Validar cambio de contraseña (si se quiere cambiar)
     if (newPassword || confirmPassword || currentPassword) {
       if (!currentPassword) {
-        setError('Ingresá tu contraseña actual para cambiarla.');
+        setError('Ingresa tu contraseña actual para cambiarla.');
         return;
       }
       if (newPassword.length < 6) {
@@ -146,6 +161,57 @@ export default function Configuracion({ navigation }) {
       setConfirmPassword('');
     } else {
       setError(result.message || 'Error al actualizar el perfil.');
+    }
+  };
+
+  // ─── Guardar situación ───
+  const handleSaveSituacion = async () => {
+    setSituacionError('');
+
+    if (situacion === 'ninguna') {
+      // Limpiar FUR y babyDate
+      const result = await updateProfile({ furDate: null, babyDate: null });
+      if (result.success) {
+        await refresh();
+        Alert.alert('Guardado', 'Tu situación se actualizó.');
+      }
+      return;
+    }
+
+    if (!situacionDate.trim()) {
+      setSituacionError('Ingresa la fecha.');
+      return;
+    }
+    if (!isValidDate(situacionDate)) {
+      setSituacionError('La fecha no es válida. Usa el formato DD/MM/AAAA.');
+      return;
+    }
+
+    setSituacionSaving(true);
+    const updates = {};
+    if (situacion === 'embarazada') {
+      updates.furDate = situacionDate;
+      updates.babyDate = null;
+    } else {
+      updates.babyDate = situacionDate;
+      updates.furDate = null;
+    }
+
+    const result = await updateProfile(updates);
+    setSituacionSaving(false);
+
+    if (result.success) {
+      await refresh();
+      Alert.alert('Guardado', 'Tu situación se actualizó correctamente.');
+    } else {
+      setSituacionError(result.message || 'No se pudo guardar.');
+    }
+  };
+
+  const handleSituacionDateBlur = () => {
+    const digits = situacionDate.replace(/\D/g, '');
+    if (digits.length === 8) {
+      setSituacionDate(digits.substring(0, 2) + '/' + digits.substring(2, 4) + '/' + digits.substring(4));
     }
   };
 
@@ -396,6 +462,65 @@ export default function Configuracion({ navigation }) {
       fontWeight: '600',
       color: colors.danger,
     },
+    situacionDescription: {
+      fontSize: 14,
+      lineHeight: 20,
+      marginBottom: 16,
+    },
+    situacionOptions: {
+      gap: 10,
+      marginBottom: 16,
+    },
+    situacionOption: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+      borderRadius: 16,
+      borderWidth: 1,
+    },
+    situacionOptionText: {
+      fontSize: 15,
+      fontWeight: '600',
+      flex: 1,
+    },
+    situacionDateSection: {
+      marginBottom: 16,
+    },
+    situacionDateLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      marginBottom: 8,
+      marginLeft: 4,
+    },
+    situacionDateInput: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      height: 48,
+      borderWidth: 1,
+      borderRadius: 16,
+      paddingHorizontal: 14,
+    },
+    situacionDateIcon: {
+      marginRight: 10,
+      fontSize: 16,
+    },
+    situacionDateText: {
+      flex: 1,
+      fontSize: 16,
+      height: 48,
+    },
+    situacionSaveButton: {
+      borderRadius: 999,
+      paddingVertical: 14,
+      alignItems: 'center',
+    },
+    situacionSaveText: {
+      color: '#ffffff',
+      fontSize: 15,
+      fontWeight: '700',
+    },
   });
 
   return (
@@ -534,7 +659,7 @@ export default function Configuracion({ navigation }) {
                 <TextInput
                   value={confirmPassword}
                   onChangeText={(t) => { setConfirmPassword(t); setError(''); setSuccessMsg(''); }}
-                  placeholder="Repetí la nueva contraseña"
+                  placeholder="Repite la nueva contraseña"
                   placeholderTextColor={colors.textTertiary}
                   secureTextEntry
                   style={dynamicStyles.input}
@@ -557,7 +682,117 @@ export default function Configuracion({ navigation }) {
         </View>
 
         {/* ═══════════════════════════════════════════
-            SECCIÓN 2: TEMA
+            SECCIÓN 2: MI SITUACIÓN
+            ═══════════════════════════════════════════ */}
+        <Text style={dynamicStyles.sectionTitle}>Mi Situación</Text>
+
+        <View style={dynamicStyles.card}>
+          <Text style={[dynamicStyles.situacionDescription, { color: colors.textSecondary }]}>
+            Indica tu situación actual para personalizar la experiencia.
+          </Text>
+
+          {/* Opciones de situación */}
+          <View style={dynamicStyles.situacionOptions}>
+            <TouchableOpacity
+              style={[
+                dynamicStyles.situacionOption,
+                {
+                  backgroundColor: situacion === 'embarazada' ? colors.primaryBg : colors.surfaceAlt,
+                  borderColor: situacion === 'embarazada' ? colors.primary : colors.inputBorder,
+                },
+              ]}
+              onPress={() => { setSituacion('embarazada'); setSituacionError(''); }}
+              activeOpacity={0.7}
+            >
+              <Baby size={20} color={situacion === 'embarazada' ? colors.primary : colors.textTertiary} />
+              <Text style={[dynamicStyles.situacionOptionText, { color: situacion === 'embarazada' ? colors.primary : colors.text }]}>
+                Estoy embarazada
+              </Text>
+              {situacion === 'embarazada' && <Check size={16} color={colors.primary} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                dynamicStyles.situacionOption,
+                {
+                  backgroundColor: situacion === 'bebe' ? colors.primaryBg : colors.surfaceAlt,
+                  borderColor: situacion === 'bebe' ? colors.primary : colors.inputBorder,
+                },
+              ]}
+              onPress={() => { setSituacion('bebe'); setSituacionError(''); }}
+              activeOpacity={0.7}
+            >
+              <Heart size={20} color={situacion === 'bebe' ? colors.primary : colors.textTertiary} />
+              <Text style={[dynamicStyles.situacionOptionText, { color: situacion === 'bebe' ? colors.primary : colors.text }]}>
+                Ya tengo un bebé
+              </Text>
+              {situacion === 'bebe' && <Check size={16} color={colors.primary} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                dynamicStyles.situacionOption,
+                {
+                  backgroundColor: situacion === 'ninguna' ? colors.primaryBg : colors.surfaceAlt,
+                  borderColor: situacion === 'ninguna' ? colors.primary : colors.inputBorder,
+                },
+              ]}
+              onPress={() => { setSituacion('ninguna'); setSituacionError(''); }}
+              activeOpacity={0.7}
+            >
+              <Text style={[dynamicStyles.situacionOptionText, { color: situacion === 'ninguna' ? colors.primary : colors.text }]}>
+                Ninguna por ahora
+              </Text>
+              {situacion === 'ninguna' && <Check size={16} color={colors.primary} />}
+            </TouchableOpacity>
+          </View>
+
+          {/* Campo de fecha (solo si embarazada o bebé) */}
+          {situacion !== 'ninguna' && (
+            <View style={dynamicStyles.situacionDateSection}>
+              <Text style={[dynamicStyles.situacionDateLabel, { color: colors.textSecondary }]}>
+                {situacion === 'embarazada'
+                  ? 'Fecha de Última Regla (FUR)'
+                  : 'Fecha de nacimiento del bebé'}
+              </Text>
+              <View style={[dynamicStyles.situacionDateInput, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
+                <Text style={[dynamicStyles.situacionDateIcon, { color: colors.textTertiary }]}>📅</Text>
+                <TextInput
+                  value={situacionDate}
+                  onChangeText={(t) => { setSituacionDate(formatDateInput(t)); setSituacionError(''); }}
+                  onBlur={handleSituacionDateBlur}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor={colors.textTertiary}
+                  style={[dynamicStyles.situacionDateText, { color: colors.text }]}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Error */}
+          {situacionError ? (
+            <View style={[dynamicStyles.errorBox, { marginTop: 12 }]}>
+              <Text style={dynamicStyles.errorText}>{situacionError}</Text>
+            </View>
+          ) : null}
+
+          {/* Botón guardar */}
+          <TouchableOpacity
+            style={[dynamicStyles.situacionSaveButton, { backgroundColor: colors.primary }]}
+            onPress={handleSaveSituacion}
+            activeOpacity={0.85}
+            disabled={situacionSaving}
+          >
+            {situacionSaving
+              ? <ActivityIndicator color="#ffffff" />
+              : <Text style={dynamicStyles.situacionSaveText}>Guardar situación</Text>}
+          </TouchableOpacity>
+        </View>
+
+        {/* ═══════════════════════════════════════════
+            SECCIÓN 3: TEMA
             ═══════════════════════════════════════════ */}
         <Text style={dynamicStyles.sectionTitle}>Apariencia</Text>
 
@@ -637,7 +872,7 @@ export default function Configuracion({ navigation }) {
               <Text style={[styles.disclaimerTitle, { color: colors.text }]}>Exención de responsabilidad</Text>
               <Text style={[styles.disclaimerText, { color: colors.textSecondary }]}>
                 La información proporcionada por esta aplicación es de carácter orientativo y no sustituye
-                la consulta con un profesional de la salud. Ante cualquier duda, consultá a tu médico.
+                la consulta con un profesional de la salud. Ante cualquier duda, consulta a tu médico.
               </Text>
             </View>
           </View>
@@ -665,7 +900,7 @@ export default function Configuracion({ navigation }) {
           <SafeAreaView style={styles.modalSafeArea}>
             <View style={[styles.modalContainer, { backgroundColor: colors.surface }]}>
               <View style={[styles.modalHeader, { borderBottomColor: colors.cardBorder }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Elegí tu icono</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Elige tu icono</Text>
                 <TouchableOpacity
                   style={[styles.modalClose, { backgroundColor: colors.surfaceAlt }]}
                   onPress={() => setShowAvatarModal(false)}

@@ -49,11 +49,11 @@ export default function RegistroBebe({ navigation }) {
     setError('');
 
     if (!nombre.trim()) {
-      setError('Ingresá el nombre del bebé.');
+      setError('Ingresa el nombre del bebé.');
       return;
     }
     if (!sexo) {
-      setError('Seleccioná el sexo del bebé.');
+      setError('Selecciona el sexo del bebé.');
       return;
     }
     if (fechaNac && !isValidDate(fechaNac)) {
@@ -108,7 +108,7 @@ export default function RegistroBebe({ navigation }) {
           </View>
           <Text style={[styles.headerTitle, { color: colors.text }]}>Datos del bebé</Text>
           <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-            Completá la información inicial de tu bebé
+            Completa la información inicial de tu bebé
           </Text>
         </View>
 

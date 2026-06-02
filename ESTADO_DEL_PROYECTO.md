@@ -122,11 +122,16 @@ La app adapta su contenido segun 3 etapas:
 
 | Etapa | Condicion | Menu | Perfil |
 |---|---|---|---|
-| **sin_datos** | Sin FUR, sin bebe | Invitacion a configurar | "Completa tu perfil" |
+| **sin_datos** | Sin FUR, sin bebe | Setup flow: "Estoy embarazada" / "Ya tengo un bebe" / "Ninguna" | "Completa tu perfil" → Configuracion |
 | **pre_parto** | Tiene FUR | Semana X, trimestre, desarrollo fetal | Mi Embarazo (semanas, FPP) |
 | **post_parto** | Tiene bebe registrado | Edad del bebe, hitos | Mi Bebe (nombre, edad) |
 
 Manejado por `EtapaContext.js` — se calcula automaticamente del perfil de la usuaria.
+
+**Cambio de etapa desde:**
+- **Menu.js**: Setup flow inline (3 opciones) al estar en sin_datos
+- **Configuracion.js**: Seccion "Mi Situacion" (3 opciones + campo de fecha)
+- **PerfilHijo.js**: Input de fecha de nacimiento del bebe (si etapa = desconocida)
 
 ---
 

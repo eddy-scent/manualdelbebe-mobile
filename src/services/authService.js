@@ -138,7 +138,7 @@ export const updatePassword = async (currentPassword, newPassword) => {
       password: currentPassword,
     });
     if (signInError) return { success: false, message: 'La contraseña actual es incorrecta.' };
-    
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) return { success: false, message: error.message };
     return { success: true, message: 'Contraseña actualizada.' };
