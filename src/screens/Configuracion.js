@@ -56,7 +56,7 @@ const AVATAR_COLORS = [
 ];
 
 export default function Configuracion({ navigation }) {
-  const { user, updateProfile, logout } = useAuth();
+  const { user, updateProfile, updatePassword, logout } = useAuth();
   const { theme, colors, isDark, toggleTheme } = useTheme();
 
   // ─── Estado del formulario de perfil ───
@@ -124,19 +124,16 @@ export default function Configuracion({ navigation }) {
     // Preparar datos a actualizar
     const updates = {
       fullName: fullName.trim(),
-      email: email.trim().toLowerCase(),
-      avatarIcon: selectedIcon,
-      avatarColor: selectedColor,
     };
 
     // Si quiere cambiar contraseña, verificar la actual
     if (newPassword && currentPassword) {
-      if (currentPassword !== user?.password) {
-        setError('La contraseña actual es incorrecta.');
+      const pwdResult = await updatePassword(currentPassword, newPassword);
+      if (!pwdResult.success) {
+        setError(pwdResult.message);
         setSaving(false);
         return;
       }
-      updates.password = newPassword;
     }
 
     const result = await updateProfile(updates);

@@ -71,8 +71,8 @@ src/
 | ID | Requerimiento | Estado | Detalle |
 |---|---|---|---|
 | RF-01 | Registro de Cuenta | ✅ | Formulario completo con nombre, email, password + campos opcionales |
-| RF-02 | Autenticacion | ✅ | Login con email/password. Mock AsyncStorage. Persistencia de sesion |
-| RF-03 | Edicion de Perfil | ✅ | Editar nombre, correo, password, avatar (5 iconos x 8 colores) |
+| RF-02 | Autenticacion | ✅ | Login con email/password y Supabase Auth |
+| RF-03 | Edicion de Perfil | ✅ | Editar nombre y password con Supabase Auth |
 | RF-04 | Personalizacion de Interfaz | ⚠️ Parcial | Tema claro/oscuro implementado. Falta selector de idioma |
 | RF-05 | Datos Biometricos Maternos | ✅ | Peso, sueno, presion arterial, 8 sintomas via checkboxes |
 | RF-06 | Metricas Infantiles | ✅ | Pre-parto: movimiento fetal. Post-parto: peso, longitud, tomas, 5 sintomas |
@@ -94,7 +94,7 @@ src/
 | RNF-03 | Disponibilidad Offline | ✅ | App funciona offline (todo local) |
 | RNF-04 | Sincronizacion de Sesion | ❌ | No hay WebView ni sincronizacion de token |
 | RNF-05 | Tolerancia a Fallas | ❌ | Sin manejo de errores de red ni fallback |
-| RNF-06 | Exencion de Responsabilidad | ✅ | Texto en Configuracion (Legal) y DrManuel |
+| RNF-06 | Exencion de Responsabilidad | ✅ | Texto en Registro, Configuracion (Legal) y DrManuel |
 | RNF-07 | Tiempo de Respuesta | ✅ | Navegacion nativa con animaciones fluidas |
 | RNF-08 | Interfaz Responsiva | ⚠️ Parcial | SafeAreaView + ScrollView. Sin testing multi-dispositivo |
 | RNF-09 | Persistencia de Estado | ✅ | Sesion, perfil, biometricos, eventos, tema, recordatorios |

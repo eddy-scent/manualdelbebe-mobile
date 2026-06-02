@@ -57,7 +57,7 @@ Registro
 
 **Que pasa al conectar BD:**
 - `authService.register()` llama a `supabase.auth.signUp()`
-- Crea fila en tabla `usuario`
+- Supabase Auth maneja la creacion de `auth.users` y metadatos
 - Crea fila en tabla `perfil_madre` si hay FUR/bebe
 - Si exitoso → navega a MainTabs
 
@@ -199,8 +199,7 @@ Configuracion
 ```
 
 **Que pasa al conectar BD:**
-- Guardar perfil → `supabase.from('usuario').update()`
-- Avatar se guarda en `usuario.avatar_icon` + `usuario.avatar_color`
+- Guardar perfil → `supabase.auth.updateUser()` para actualizar `nombre_completo`
 - Password → `supabase.auth.updateUser({ password })`
 
 ---
@@ -305,7 +304,7 @@ Recordatorios
 ```
 
 **Que pasa al conectar BD:**
-- Config guarda en `recordatorios_config`
+- Config guarda en `configuracion_recordatorios`
 - Notificaciones se programan localmente (expo-notifications)
 - Al crear cita medica en Calendario → auto-programa notificacion
 
@@ -368,8 +367,8 @@ Header.js (avatar)
 PerfilMama.js ←→ biometricService ←→ biometria_madre
 PerfilHijo.js ←→ babyService ←→ metricas_bebe + perfil_bebe
 Calendario.js ←→ calendarService ←→ registro_tarea
-Recordatorios.js ←→ notificationService ←→ recordatorios_config
-Configuracion.js ←→ authService ←→ usuario
+Recordatorios.js ←→ notificationService ←→ configuracion_recordatorios
+Configuracion.js ←→ authService ←→ auth.users
 ```
 
 ### Puntos criticos al migrar a Supabase
@@ -379,7 +378,7 @@ Configuracion.js ←→ authService ←→ usuario
 3. **biometricService** → todos los queries necesitan `WHERE id_usuario = ?`
 4. **calendarService** → todos los queries necesitan `WHERE id_usuario = ?`
 5. **babyService** → perfil_bebe y metricas_bebe necesitan `id_usuario`
-6. **notificationService** → config se guarda por usuario en `recordatorios_config`
+6. **notificationService** → config se guarda por usuario en `configuracion_recordatorios`
 
 ---
 

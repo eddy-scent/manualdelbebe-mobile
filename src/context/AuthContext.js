@@ -52,6 +52,10 @@ export function AuthProvider({ children }) {
     return result;
   }, []);
 
+  const updatePassword = useCallback(async (currentPassword, newPassword) => {
+    return await authService.updatePassword(currentPassword, newPassword);
+  }, []);
+
   const value = {
     user,
     loading,
@@ -60,6 +64,7 @@ export function AuthProvider({ children }) {
     register,
     logout,
     updateProfile,
+    updatePassword,
   };
 
   return (

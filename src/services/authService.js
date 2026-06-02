@@ -101,30 +101,48 @@ export const logout = async () => {
  */
 export const updateProfile = async (updates) => {
   try {
-    const session = await getSession();
-    if (!session) return { success: false, message: 'No hay sesión activa.' };
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return { success: false, message: 'No hay sesión activa.' };
 
-    const stored = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);
-    let profiles = stored ? JSON.parse(stored) : [];
+    const authUpdates = {};
+    if (updates.fullName) {
+      authUpdates.data = { nombre_completo: updates.fullName };
+    }
 
-    const index = profiles.findIndex(p => p.id === session.id);
-    if (index === -1) return { success: false, message: 'Perfil no encontrado.' };
+    if (Object.keys(authUpdates).length > 0) {
+      const { error: updateError } = await supabase.auth.updateUser(authUpdates);
+      if (updateError) return { success: false, message: updateError.message };
+    }
 
-    profiles[index] = { ...profiles[index], ...updates };
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_PROFILE, JSON.stringify(profiles));
+    const sessionUser = {
+      ...user,
+      fullName: updates.fullName || user.user_metadata?.nombre_completo,
+    };
 
-    // Actualizar sesión también (solo campos de sesión)
-    const sessionUpdates = {};
-    if (updates.fullName !== undefined) sessionUpdates.fullName = updates.fullName;
-    if (updates.email !== undefined) sessionUpdates.email = updates.email;
-    if (updates.furDate !== undefined) sessionUpdates.furDate = updates.furDate;
-    if (updates.avatarIcon !== undefined) sessionUpdates.avatarIcon = updates.avatarIcon;
-    if (updates.avatarColor !== undefined) sessionUpdates.avatarColor = updates.avatarColor;
-    const updatedSession = { ...session, ...sessionUpdates };
-    await AsyncStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(updatedSession));
-
-    return { success: true, message: 'Perfil actualizado.', user: updatedSession };
-  } catch {
+    return { success: true, message: 'Perfil actualizado.', user: sessionUser };
+  } catch (error) {
     return { success: false, message: 'Error al actualizar el perfil.' };
+  }
+};
+
+/**
+ * Actualiza la contraseña de la usuaria activa.
+ */
+export const updatePassword = async (currentPassword, newPassword) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, message: 'No hay sesión activa.' };
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (signInError) return { success: false, message: 'La contraseña actual es incorrecta.' };
+    
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, message: error.message };
+    return { success: true, message: 'Contraseña actualizada.' };
+  } catch (error) {
+    return { success: false, message: 'Error al actualizar la contraseña.' };
   }
 };
