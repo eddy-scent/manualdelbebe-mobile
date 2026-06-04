@@ -1,55 +1,68 @@
 // ──────────────────────────────────────────────────────────
-// Servicio de datos del bebé — CRUD con AsyncStorage
+// Servicio de datos del bebé — Adaptado a Supabase
 // RF-06 (Métricas Infantiles)
 // ──────────────────────────────────────────────────────────
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_KEYS } from '../utils/constants';
+import { supabase } from './supabaseClient';
 import { getTodayString } from './dateService';
-
-const BABY_DATA_PREFIX = '@baby_data_';
-const BABY_PROFILE_KEY = '@baby_profile';
 
 // ─── Perfil del bebé (registro inicial) ──────────────
 
-/**
- * Guarda el perfil del bebé (datos de registro inicial).
- * Incluye: nombre, fecha de nacimiento, sexo, peso al nacer, etc.
- */
 export const saveBabyProfile = async (profile) => {
   try {
-    await AsyncStorage.setItem(BABY_PROFILE_KEY, JSON.stringify({
-      ...profile,
-      createdAt: new Date().toISOString(),
-    }));
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error('No hay sesión activa.');
+
+    const payload = {
+      id_usuario: user.id,
+      nombre: profile.nombre || null,
+      sexo: profile.sexo || null,
+      fecha_nac: profile.fechaNac || null,
+      peso_nac: profile.pesoNac ? parseFloat(profile.pesoNac) : null,
+      talla_nac: profile.tallaNac ? parseFloat(profile.tallaNac) : null,
+    };
+
+    const { error } = await supabase
+      .from('perfil_bebe')
+      .upsert(payload, { onConflict: 'id_usuario' });
+
+    if (error) throw error;
     return { success: true };
   } catch (error) {
-    console.error('Error guardando perfil del bebé', error);
+    console.error('Error guardando perfil del bebé en Supabase', error);
     return { success: false, message: 'No se pudo guardar el perfil del bebé.' };
   }
 };
 
-/**
- * Obtiene el perfil del bebé.
- * Retorna null si no se ha registrado.
- */
 export const getBabyProfile = async () => {
   try {
-    const data = await AsyncStorage.getItem(BABY_PROFILE_KEY);
-    return data ? JSON.parse(data) : null;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return null;
+
+    const { data, error } = await supabase
+      .from('perfil_bebe')
+      .select('*')
+      .eq('id_usuario', user.id)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      nombre: data.nombre,
+      sexo: data.sexo,
+      fechaNac: data.fecha_nac,
+      pesoNac: data.peso_nac ? String(data.peso_nac) : '',
+      tallaNac: data.talla_nac ? String(data.talla_nac) : '',
+    };
   } catch {
     return null;
   }
 };
 
-/**
- * Actualiza el perfil del bebé (merge con datos existentes).
- */
 export const updateBabyProfile = async (updates) => {
   try {
-    const existing = await getBabyProfile();
-    const merged = { ...existing, ...updates, updatedAt: new Date().toISOString() };
-    await AsyncStorage.setItem(BABY_PROFILE_KEY, JSON.stringify(merged));
-    return { success: true };
+    const existing = await getBabyProfile() || {};
+    const merged = { ...existing, ...updates };
+    return await saveBabyProfile(merged);
   } catch {
     return { success: false, message: 'No se pudo actualizar el perfil.' };
   }
@@ -57,51 +70,99 @@ export const updateBabyProfile = async (updates) => {
 
 // ─── Datos diarios del bebé ──────────────────────────
 
-/**
- * Guarda los datos del bebé del día.
- * key: @baby_data_YYYY-MM-DD
- */
+const parseMetricasRow = (row) => {
+  const movimientos = {};
+  if (row.movimiento_fetal) movimientos['Movimiento fetal activo'] = true;
+  if (row.cambio_intensidad) movimientos['Cambio de intensidad'] = true;
+
+  const sintomas = {};
+  if (row.llanto_prolongado) sintomas['Llanto prolongado'] = true;
+  if (row.rechazo_alimento) sintomas['Rechazo de alimento'] = true;
+  if (row.problemas_suenio) sintomas['Problemas de sueño'] = true;
+  if (row.fiebre) sintomas['Fiebre/Temperatura anómala'] = true;
+  if (row.alteraciones_piel) sintomas['Alteraciones en la piel del bebé'] = true;
+
+  return {
+    date: row.fecha_registro,
+    movimientos,
+    sintomas,
+    updatedAt: row.fecha_actualizacion,
+    // Nota: peso, longitud y tomas no están en la BD actualmente.
+    // Los dejamos en blanco para que la app no falle.
+    peso: '',
+    longitud: '',
+    tomas: '',
+  };
+};
+
 export const saveBabyData = async (data) => {
   try {
-    const key = `${BABY_DATA_PREFIX}${data.date || getTodayString()}`;
-    await AsyncStorage.setItem(key, JSON.stringify({
-      ...data,
-      updatedAt: new Date().toISOString(),
-    }));
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) throw new Error('No hay sesión activa.');
+
+    const fechaRegistro = data.date || getTodayString();
+    const payload = {
+      id_usuario: user.id,
+      fecha_registro: fechaRegistro,
+      movimiento_fetal: !!data.movimientos?.['Movimiento fetal activo'],
+      cambio_intensidad: !!data.movimientos?.['Cambio de intensidad'],
+      llanto_prolongado: !!data.sintomas?.['Llanto prolongado'],
+      rechazo_alimento: !!data.sintomas?.['Rechazo de alimento'],
+      problemas_suenio: !!data.sintomas?.['Problemas de sueño'],
+      fiebre: !!data.sintomas?.['Fiebre/Temperatura anómala'],
+      alteraciones_piel: !!data.sintomas?.['Alteraciones en la piel del bebé'],
+      fecha_actualizacion: new Date().toISOString(),
+    };
+
+    const { error } = await supabase
+      .from('metricas_bebe')
+      .upsert(payload, { onConflict: 'id_usuario, fecha_registro' });
+
+    if (error) throw error;
     return { success: true };
   } catch (error) {
-    console.error('Error guardando datos del bebé', error);
+    console.error('Error guardando métricas del bebé en Supabase', error);
     return { success: false, message: 'No se pudieron guardar los datos.' };
   }
 };
 
-/**
- * Obtiene los datos del bebé de una fecha específica.
- * Si no se especifica fecha, usa la de hoy.
- */
 export const getBabyData = async (date) => {
   try {
-    const key = `${BABY_DATA_PREFIX}${date || getTodayString()}`;
-    const data = await AsyncStorage.getItem(key);
-    return data ? JSON.parse(data) : null;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return null;
+
+    const targetDate = date || getTodayString();
+    
+    const { data, error } = await supabase
+      .from('metricas_bebe')
+      .select('*')
+      .eq('id_usuario', user.id)
+      .eq('fecha_registro', targetDate)
+      .single();
+
+    if (error || !data) return null;
+
+    return parseMetricasRow(data);
   } catch (error) {
-    console.error('Error cargando datos del bebé', error);
+    console.error('Error cargando métricas del bebé', error);
     return null;
   }
 };
 
-/**
- * Obtiene todos los registros del bebé (para historial/gráficos).
- * Retorna array ordenado por fecha descendente.
- */
 export const getAllBabyData = async () => {
   try {
-    const keys = await AsyncStorage.getAllKeys();
-    const babyKeys = keys.filter(k => k.startsWith(BABY_DATA_PREFIX));
-    const entries = await AsyncStorage.multiGet(babyKeys);
-    return entries
-      .map(([key, value]) => JSON.parse(value))
-      .sort((a, b) => b.date.localeCompare(a.date));
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return [];
+
+    const { data, error } = await supabase
+      .from('metricas_bebe')
+      .select('*')
+      .eq('id_usuario', user.id)
+      .order('fecha_registro', { ascending: false });
+
+    if (error || !data) return [];
+
+    return data.map(parseMetricasRow);
   } catch {
     return [];
   }

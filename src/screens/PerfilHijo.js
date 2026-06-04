@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ArrowLeft, Check, Baby, Ruler, Milk, Activity, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Check, Baby, Activity, Calendar } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -44,9 +44,6 @@ export default function PerfilHijo({ navigation }) {
   const [movimientos, setMovimientos] = useState({});
 
   // ─── Estado post-parto ───
-  const [peso, setPeso] = useState('');
-  const [longitud, setLongitud] = useState('');
-  const [tomas, setTomas] = useState('');
   const [sintomas, setSintomas] = useState({});
 
   const today = new Date();
@@ -65,9 +62,6 @@ export default function PerfilHijo({ navigation }) {
           if (etapa === 'pre_parto') {
             setMovimientos(data.movimientos || {});
           } else {
-            setPeso(data.peso ?? '');
-            setLongitud(data.longitud ?? '');
-            setTomas(data.tomas ?? '');
             setSintomas(data.sintomas || {});
           }
         }
@@ -127,9 +121,6 @@ export default function PerfilHijo({ navigation }) {
     if (etapa === 'pre_parto') {
       data.movimientos = movimientos;
     } else {
-      data.peso = peso;
-      data.longitud = longitud;
-      data.tomas = tomas;
       data.sintomas = sintomas;
     }
 
@@ -316,48 +307,6 @@ export default function PerfilHijo({ navigation }) {
             ═══════════════════════════════════════════ */}
         {etapa === 'post_parto' && (
           <>
-            {/* Métricas numéricas */}
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Métricas</Text>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={styles.cardHeader}>
-                <Ruler size={20} color={colors.primary} />
-                <Text style={[styles.cardTitle, { color: colors.text }]}>Datos físicos</Text>
-              </View>
-
-              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Peso del bebé (kg)</Text>
-              <TextInput
-                value={peso}
-                onChangeText={setPeso}
-                placeholder="Ej: 3.5"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.input, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder, color: colors.text }]}
-                keyboardType="decimal-pad"
-              />
-
-              <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Longitud (cm)</Text>
-              <TextInput
-                value={longitud}
-                onChangeText={setLongitud}
-                placeholder="Ej: 50"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.input, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder, color: colors.text }]}
-                keyboardType="decimal-pad"
-              />
-
-              <View style={styles.fieldHeader}>
-                <Milk size={16} color={colors.primary} />
-                <Text style={[styles.fieldLabel, { color: colors.textSecondary, marginBottom: 0, marginLeft: 6 }]}>Frecuencia de alimentación</Text>
-              </View>
-              <TextInput
-                value={tomas}
-                onChangeText={setTomas}
-                placeholder="Cantidad de tomas por día"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.input, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder, color: colors.text }]}
-                keyboardType="number-pad"
-              />
-            </View>
-
             {/* Síntomas */}
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Síntomas</Text>
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
