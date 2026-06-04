@@ -71,7 +71,9 @@ export default function Perfil({ navigation }) {
               </View>
               <View style={styles.statItem}>
                 <Text style={[styles.statValue, { color: colors.primary }]}>
-                  {embarazoData.fpp ? `${embarazoData.fpp.getDate()}/${embarazoData.fpp.getMonth() + 1}/${embarazoData.fpp.getFullYear()}` : '--'}
+                  {embarazoData.fpp ? 
+                    `${String(embarazoData.fpp.getDate()).padStart(2, '0')}/${String(embarazoData.fpp.getMonth() + 1).padStart(2, '0')}/${embarazoData.fpp.getFullYear()}` 
+                    : '--'}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Fecha probable</Text>
               </View>
