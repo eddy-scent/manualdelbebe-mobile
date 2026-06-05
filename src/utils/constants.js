@@ -31,19 +31,46 @@ export const COLORS = {
 };
 
 // Umbrales para el motor de alertas (RF-09)
+// Basados en: ACOG Practice Bulletin No. 202 y AAP Caring for Your Baby.
+// Ver detalle clínico completo en: docs/UMBRALES_ALERTAS.md
 export const ALERT_THRESHOLDS = {
-  BLOOD_PRESSURE_HIGH_SYSTOLIC: 140,    // mmHg
-  BLOOD_PRESSURE_LOW_SYSTOLIC: 90,       // mmHg
-  BLOOD_PRESSURE_HIGH_DIASTOLIC: 90,     // mmHg
-  BLOOD_PRESSURE_LOW_DIASTOLIC: 60,      // mmHg
+  // ── Presión Arterial (ACOG) ────────────────────────────────────────
+  BLOOD_PRESSURE_SEVERE_SYSTOLIC: 160,   // ≥160 mmHg = Hipertensión severa (EMERGENCIA)
+  BLOOD_PRESSURE_SEVERE_DIASTOLIC: 110,  // ≥110 mmHg = Hipertensión severa (EMERGENCIA)
+  BLOOD_PRESSURE_HIGH_SYSTOLIC: 140,     // ≥140 mmHg = Hipertensión gestacional (PELIGRO)
+  BLOOD_PRESSURE_HIGH_DIASTOLIC: 90,     // ≥90 mmHg  = Hipertensión gestacional (PELIGRO)
+  BLOOD_PRESSURE_LOW_SYSTOLIC: 90,       // ≤90 mmHg  = Hipotensión (ADVERTENCIA)
+  BLOOD_PRESSURE_LOW_DIASTOLIC: 60,      // ≤60 mmHg  = Hipotensión (ADVERTENCIA)
+
+  // ── Sueño ─────────────────────────────────────────────────────────
+  SLEEP_MIN_HOURS: 4,                    // <4h = Privación severa (ADVERTENCIA)
+
+  // ── Peso (rangos generales de referencia) ─────────────────────────
   WEIGHT_MIN_KG: 40,
   WEIGHT_MAX_KG: 200,
-  SLEEP_MIN_HOURS: 4,
-  SLEEP_MAX_HOURS: 16,
+
+  // ── Síntomas Maternos Críticos (ACOG Urgent Warning Signs) ────────
+  // Estos síntomas disparan alerta PELIGRO de forma aislada.
   SYMPTOM_RED_FLAGS: [
-    'Tristeza persistente/Llanto',
+    'Dolor de cabeza',
     'Hinchazón de pies',
   ],
+
+  // ── Síntomas de Salud Mental (EPDS adaptado) ──────────────────────
+  // Si se marcan 3 o más de estos juntos → alerta ADVERTENCIA.
+  SYMPTOM_MENTAL_HEALTH: [
+    'Tristeza persistente/Llanto',
+    'Ansiedad/Nerviosismo',
+    'Sentimiento de culpa',
+    'Irritabilidad',
+  ],
+  MENTAL_HEALTH_THRESHOLD: 3,
+
+  // ── Síntomas del Bebé (AAP) ───────────────────────────────────────
+  // 'Fiebre/Temperatura anómala' → EMERGENCIA absoluta (solo)
+  // 'Rechazo de alimento' + 'Llanto prolongado' juntos → PELIGRO
+  BABY_EMERGENCY_SYMPTOMS: ['Fiebre/Temperatura anómala'],
+  BABY_COMBINED_DANGER: ['Rechazo de alimento', 'Llanto prolongado'],
 };
 
 // Claves de AsyncStorage

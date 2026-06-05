@@ -40,3 +40,6 @@ yarn-error.*
 /ios
 /android
 .env
+
+# Supabase CLI (archivos locales por máquina, no compartir)
+supabase/.temp/
