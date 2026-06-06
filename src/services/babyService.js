@@ -72,15 +72,15 @@ export const updateBabyProfile = async (updates) => {
 
 const parseMetricasRow = (row) => {
   const movimientos = {};
-  if (row.movimiento_fetal) movimientos['Movimiento fetal activo'] = true;
-  if (row.cambio_intensidad) movimientos['Cambio de intensidad'] = true;
+  if (row.movimiento_fetal) movimientos['movimiento_fetal'] = true;
+  if (row.cambio_intensidad) movimientos['cambio_intensidad'] = true;
 
   const sintomas = {};
-  if (row.llanto_prolongado) sintomas['Llanto prolongado'] = true;
-  if (row.rechazo_alimento) sintomas['Rechazo de alimento'] = true;
-  if (row.problemas_suenio) sintomas['Problemas de sueño'] = true;
-  if (row.fiebre) sintomas['Fiebre/Temperatura anómala'] = true;
-  if (row.alteraciones_piel) sintomas['Alteraciones en la piel del bebé'] = true;
+  if (row.llanto_prolongado) sintomas['llanto_prolongado'] = true;
+  if (row.rechazo_alimento) sintomas['rechazo_alimento'] = true;
+  if (row.problemas_suenio) sintomas['problemas_suenio'] = true;
+  if (row.fiebre) sintomas['fiebre'] = true;
+  if (row.alteraciones_piel) sintomas['alteraciones_piel'] = true;
 
   return {
     date: row.fecha_registro,
@@ -104,13 +104,13 @@ export const saveBabyData = async (data) => {
     const payload = {
       id_usuario: user.id,
       fecha_registro: fechaRegistro,
-      movimiento_fetal: !!data.movimientos?.['Movimiento fetal activo'],
-      cambio_intensidad: !!data.movimientos?.['Cambio de intensidad'],
-      llanto_prolongado: !!data.sintomas?.['Llanto prolongado'],
-      rechazo_alimento: !!data.sintomas?.['Rechazo de alimento'],
-      problemas_suenio: !!data.sintomas?.['Problemas de sueño'],
-      fiebre: !!data.sintomas?.['Fiebre/Temperatura anómala'],
-      alteraciones_piel: !!data.sintomas?.['Alteraciones en la piel del bebé'],
+      movimiento_fetal: !!data.movimientos?.['movimiento_fetal'],
+      cambio_intensidad: !!data.movimientos?.['cambio_intensidad'],
+      llanto_prolongado: !!data.sintomas?.['llanto_prolongado'],
+      rechazo_alimento: !!data.sintomas?.['rechazo_alimento'],
+      problemas_suenio: !!data.sintomas?.['problemas_suenio'],
+      fiebre: !!data.sintomas?.['fiebre'],
+      alteraciones_piel: !!data.sintomas?.['alteraciones_piel'],
       fecha_actualizacion: new Date().toISOString(),
     };
 

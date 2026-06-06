@@ -21,14 +21,14 @@ export const saveBiometricData = async (data) => {
       horas_suenio: parseInt(data.horasSueno, 10) || null,
       presion_sistolica: parseInt(data.presionSistolica, 10) || null,
       presion_diastolica: parseInt(data.presionDiastolica, 10) || null,
-      fatiga: !!data.sintomas?.['Fatiga extrema'],
-      dolor_cabeza: !!data.sintomas?.['Dolor de cabeza'],
-      hinchazon_pies: !!data.sintomas?.['Hinchazón de pies'],
-      nauseas: !!data.sintomas?.['Náuseas/Problemas estomacales'],
-      ansiedad: !!data.sintomas?.['Ansiedad/Nerviosismo'],
-      tristeza: !!data.sintomas?.['Tristeza persistente/Llanto'],
-      irritabilidad: !!data.sintomas?.['Irritabilidad'],
-      culpa: !!data.sintomas?.['Sentimiento de culpa'],
+      fatiga: !!data.sintomas?.['fatiga'],
+      dolor_cabeza: !!data.sintomas?.['dolor_cabeza'],
+      hinchazon_pies: !!data.sintomas?.['hinchazon_pies'],
+      nauseas: !!data.sintomas?.['nauseas'],
+      ansiedad: !!data.sintomas?.['ansiedad'],
+      tristeza: !!data.sintomas?.['tristeza'],
+      irritabilidad: !!data.sintomas?.['irritabilidad'],
+      culpa: !!data.sintomas?.['culpa'],
       fecha_actualizacion: new Date().toISOString(),
     };
 
@@ -49,14 +49,14 @@ export const saveBiometricData = async (data) => {
  */
 const parseBiometricRow = (row) => {
   const sintomas = {};
-  if (row.fatiga) sintomas['Fatiga extrema'] = true;
-  if (row.dolor_cabeza) sintomas['Dolor de cabeza'] = true;
-  if (row.hinchazon_pies) sintomas['Hinchazón de pies'] = true;
-  if (row.nauseas) sintomas['Náuseas/Problemas estomacales'] = true;
-  if (row.ansiedad) sintomas['Ansiedad/Nerviosismo'] = true;
-  if (row.tristeza) sintomas['Tristeza persistente/Llanto'] = true;
-  if (row.irritabilidad) sintomas['Irritabilidad'] = true;
-  if (row.culpa) sintomas['Sentimiento de culpa'] = true;
+  if (row.fatiga) sintomas['fatiga'] = true;
+  if (row.dolor_cabeza) sintomas['dolor_cabeza'] = true;
+  if (row.hinchazon_pies) sintomas['hinchazon_pies'] = true;
+  if (row.nauseas) sintomas['nauseas'] = true;
+  if (row.ansiedad) sintomas['ansiedad'] = true;
+  if (row.tristeza) sintomas['tristeza'] = true;
+  if (row.irritabilidad) sintomas['irritabilidad'] = true;
+  if (row.culpa) sintomas['culpa'] = true;
 
   return {
     date: row.fecha_registro,

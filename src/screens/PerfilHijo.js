@@ -15,14 +15,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ArrowLeft, Check, Baby, Activity, Calendar } from 'lucide-react-native';
+import { ArrowLeft, Check, Baby, Activity, Calendar, AlertCircle } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { parseDDMMYYYY, getTodayString, getMonthName } from '../services/dateService';
 import { saveBabyData, getBabyData, getBabyProfile } from '../services/babyService';
 import { formatDateInput, isValidDate } from '../utils/validators';
-import { MOVIMIENTOS_FETALES, SINTOMAS_INFANTIL_POSTPARTO } from '../utils/constants';
+import { MOVIMIENTOS_FETALES, SINTOMAS_INFANTIL_POSTPARTO, SINTOMAS_INFANTIL_LABELS, MOVIMIENTOS_FETALES_LABELS } from '../utils/constants';
+import { analyzeBabyData } from '../services/alertService';
 
 export default function PerfilHijo({ navigation }) {
   const { user, updateProfile } = useAuth();
@@ -45,6 +46,7 @@ export default function PerfilHijo({ navigation }) {
 
   // ─── Estado post-parto ───
   const [sintomas, setSintomas] = useState({});
+  const [activeAlerts, setActiveAlerts] = useState([]);
 
   const today = new Date();
   const dateDisplay = `${today.getDate()} de ${getMonthName(today.getMonth())} de ${today.getFullYear()}`;
@@ -80,6 +82,48 @@ export default function PerfilHijo({ navigation }) {
 
   const toggleSintoma = (nombre) => {
     setSintomas((prev) => ({ ...prev, [nombre]: !prev[nombre] }));
+  };
+
+  const evaluateData = () => {
+    const alerts = analyzeBabyData({ sintomas, movimientos, etapa });
+    setActiveAlerts(alerts);
+  };
+
+  useEffect(() => {
+    evaluateData();
+  }, [sintomas, movimientos, etapa]);
+
+  const getAlertForField = (fieldId, symptomName = null) => {
+    if (symptomName) {
+      return activeAlerts.find(a => a.fieldId === fieldId && a.symptomName === symptomName);
+    }
+    return activeAlerts.find(a => a.fieldId === fieldId);
+  };
+
+  const renderAlertIcon = (alert) => {
+    if (!alert) return null;
+    const isDanger = alert.severity === 'danger';
+    const chipColors = isDanger
+      ? { bg: '#FFF0F2', border: '#E8697A', icon: '#E8697A', text: '#C0445A' }
+      : { bg: '#FFF4E8', border: '#E8913A', icon: '#E8913A', text: '#C97A2A' };
+    return (
+      <TouchableOpacity
+        onPress={() => Alert.alert(alert.title, `${alert.message}\n\n${alert.action}`)}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+        style={[
+          styles.alertChip,
+          { backgroundColor: chipColors.bg, borderColor: chipColors.border },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`${isDanger ? 'Alerta' : 'Aviso'}: ${alert.title}`}
+      >
+        <AlertCircle size={13} color={chipColors.icon} />
+        <Text style={[styles.alertChipText, { color: chipColors.text }]}>
+          {isDanger ? 'Ver alerta' : 'Ver aviso'}
+        </Text>
+      </TouchableOpacity>
+    );
   };
 
   const handleDateBlur = () => {
@@ -132,19 +176,39 @@ export default function PerfilHijo({ navigation }) {
     }
   };
 
-  const renderCheckbox = (nombre, isChecked, onToggle) => (
-    <TouchableOpacity
-      key={nombre}
-      style={[styles.checkboxRow, { borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }]}
-      onPress={onToggle}
-      activeOpacity={0.7}
-    >
-      <Text style={[styles.checkboxLabel, { color: colors.text }]}>{nombre}</Text>
-      <View style={[styles.checkboxBox, { borderColor: colors.primary }, isChecked && { backgroundColor: colors.primary }]}>
-        {isChecked && <Check size={14} color="#ffffff" strokeWidth={3} />}
-      </View>
-    </TouchableOpacity>
-  );
+  const renderCheckbox = (key, isChecked, onToggle, labelsMap) => {
+    const alertSymptom = getAlertForField('symptom', key);
+    // Soporte para alerta combinada: un síntoma puede estar resaltado porque participa
+    // en una alerta de dos síntomas (ej: llanto + rechazo) via symptomNames
+    const isInCombinedAlert = !alertSymptom && activeAlerts.some(
+      (a) => a.symptomNames && a.symptomNames.includes(key)
+    );
+    const combinedAlert = isInCombinedAlert
+      ? activeAlerts.find((a) => a.symptomNames && a.symptomNames.includes(key))
+      : null;
+    const effectiveAlert = alertSymptom || combinedAlert;
+    const label = (labelsMap && labelsMap[key]) || key;
+    return (
+      <TouchableOpacity
+        key={key}
+        style={[styles.checkboxRow, { borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }]}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
+        <View style={styles.checkboxLabelRow}>
+          <Text style={[styles.checkboxLabel, { color: colors.text }, effectiveAlert && { color: effectiveAlert.severity === 'danger' ? '#C0445A' : '#C97A2A', fontWeight: '600' }]}>{label}</Text>
+          {renderAlertIcon(effectiveAlert)}
+        </View>
+        <View style={[
+          styles.checkboxBox, 
+          { borderColor: effectiveAlert ? (effectiveAlert.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary }, 
+          isChecked && { backgroundColor: effectiveAlert ? (effectiveAlert.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary }
+        ]}>
+          {isChecked && <Check size={14} color="#ffffff" strokeWidth={3} />}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <ScreenLayout>
@@ -294,8 +358,8 @@ export default function PerfilHijo({ navigation }) {
                 Selecciona las opciones que apliquen al movimiento fetal de hoy.
               </Text>
               <View style={styles.checkboxContainer}>
-                {MOVIMIENTOS_FETALES.map((nombre, index) =>
-                  renderCheckbox(nombre, !!movimientos[nombre], () => toggleMovimiento(nombre))
+                {MOVIMIENTOS_FETALES.map((key) =>
+                  renderCheckbox(key, !!movimientos[key], () => toggleMovimiento(key), MOVIMIENTOS_FETALES_LABELS)
                 )}
               </View>
             </View>
@@ -318,8 +382,8 @@ export default function PerfilHijo({ navigation }) {
                 Selecciona los síntomas que presente el bebé hoy.
               </Text>
               <View style={styles.checkboxContainer}>
-                {SINTOMAS_INFANTIL_POSTPARTO.map((nombre, index) =>
-                  renderCheckbox(nombre, !!sintomas[nombre], () => toggleSintoma(nombre))
+                {SINTOMAS_INFANTIL_POSTPARTO.map((key) =>
+                  renderCheckbox(key, !!sintomas[key], () => toggleSintoma(key), SINTOMAS_INFANTIL_LABELS)
                 )}
               </View>
             </View>
@@ -565,6 +629,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
+  alertChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginLeft: 8,
+    gap: 4,
+    minHeight: 28,
+  },
+  alertChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -572,10 +652,15 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
+  checkboxLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   checkboxLabel: {
     fontSize: 14,
     flex: 1,
-    paddingRight: 12,
+    flexShrink: 1,
   },
   checkboxBox: {
     width: 24,

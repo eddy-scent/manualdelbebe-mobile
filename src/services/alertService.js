@@ -15,108 +15,104 @@ import { ALERT_THRESHOLDS } from '../utils/constants';
 
 /**
  * Analiza los datos biométricos MATERNOS y retorna un array de alertas.
- * Cada alerta: { type, severity, title, message, action }
- *   type:     'pressure' | 'sleep' | 'weight' | 'symptom' | 'mental_health'
- *   severity: 'info' | 'warning' | 'danger' | 'emergency'
+ *
+ * Parámetros esperados: { horasSueno, presionSistolica, presionDiastolica, sintomas }
+ *   sintomas: objeto con claves snake_case que mapean 1:1 con columnas de biometria_madre
+ *   Ej: { dolor_cabeza: true, hinchazon_pies: false, ansiedad: true, ... }
+ *
+ * Cada alerta retornada: { fieldId, symptomName?, type, severity, title, message, action }
+ *   fieldId:  'pressure' | 'sleep' | 'symptom' | 'mental_health'
+ *   severity: 'warning' | 'danger'
  */
-export function analyzeBiometricData({ peso, horasSueno, presionSistolica, presionDiastolica, sintomas }) {
+export function analyzeBiometricData({ horasSueno, presionSistolica, presionDiastolica, sintomas }) {
   const alerts = [];
   const sys = parseInt(presionSistolica, 10);
   const dia = parseInt(presionDiastolica, 10);
-  const pesoNum = parseFloat(peso);
   const horasNum = parseFloat(horasSueno);
 
   // ─── Presión Arterial (ACOG) ──────────────────────────────────────
   if (!Number.isNaN(sys) && !Number.isNaN(dia) && sys > 0 && dia > 0) {
-    // Hipertensión Severa → EMERGENCIA (≥160/110)
     if (sys >= ALERT_THRESHOLDS.BLOOD_PRESSURE_SEVERE_SYSTOLIC || dia >= ALERT_THRESHOLDS.BLOOD_PRESSURE_SEVERE_DIASTOLIC) {
+      // ≥160/110 mmHg — Hipertensión severa
       alerts.push({
-        type: 'pressure',
-        severity: 'emergency',
-        title: '🚨 Presión arterial en rango severo',
-        message: `Tu presión (${sys}/${dia} mmHg) es una emergencia médica. Una presión ≥160/110 requiere atención inmediata según ACOG.`,
-        action: 'Acude a urgencias o llama a emergencias AHORA.',
-      });
-    }
-    // Hipertensión Gestacional → PELIGRO (≥140/90)
-    else if (sys >= ALERT_THRESHOLDS.BLOOD_PRESSURE_HIGH_SYSTOLIC || dia >= ALERT_THRESHOLDS.BLOOD_PRESSURE_HIGH_DIASTOLIC) {
-      alerts.push({
+        fieldId: 'pressure',
         type: 'pressure',
         severity: 'danger',
-        title: '🔴 Presión arterial elevada',
-        message: `Tu presión (${sys}/${dia} mmHg) supera el umbral normal para el embarazo (140/90 mmHg). Puede indicar hipertensión gestacional o preeclampsia.`,
-        action: 'Contacta a tu matrona u obstetra lo antes posible.',
+        title: 'Atención a tu presión arterial',
+        message: `Tu presión (${sys}/${dia} mmHg) está más alta de lo esperado. Te sugerimos que lo comentes con tu equipo médico a la brevedad.`,
+        action: 'Puedes llamar a tu matrona u obstetra para que te oriente.',
       });
-    }
-    // Hipotensión → ADVERTENCIA (≤90/60)
-    else if (sys <= ALERT_THRESHOLDS.BLOOD_PRESSURE_LOW_SYSTOLIC || dia <= ALERT_THRESHOLDS.BLOOD_PRESSURE_LOW_DIASTOLIC) {
+    } else if (sys >= ALERT_THRESHOLDS.BLOOD_PRESSURE_HIGH_SYSTOLIC || dia >= ALERT_THRESHOLDS.BLOOD_PRESSURE_HIGH_DIASTOLIC) {
+      // ≥140/90 mmHg — Hipertensión leve
       alerts.push({
+        fieldId: 'pressure',
         type: 'pressure',
         severity: 'warning',
-        title: '🟡 Presión arterial baja',
-        message: `Tu presión (${sys}/${dia} mmHg) está por debajo del rango normal. Puede causar mareos o desmayos.`,
-        action: 'Hidratación, descanso y consulta con tu médico si persiste.',
+        title: 'Presión un poco elevada',
+        message: `Tu presión (${sys}/${dia} mmHg) está levemente por encima de lo habitual. Puede ser algo puntual, pero vale la pena comentárselo a tu médico.`,
+        action: 'Menciónalo en tu próxima consulta o si tienes dudas, llama hoy.',
       });
-    }
-  }
-
-  // ─── Peso ─────────────────────────────────────────────────────────
-  if (!Number.isNaN(pesoNum) && pesoNum > 0) {
-    if (pesoNum < ALERT_THRESHOLDS.WEIGHT_MIN_KG) {
+    } else if (sys <= ALERT_THRESHOLDS.BLOOD_PRESSURE_LOW_SYSTOLIC || dia <= ALERT_THRESHOLDS.BLOOD_PRESSURE_LOW_DIASTOLIC) {
+      // ≤90/60 mmHg — Hipotensión
       alerts.push({
-        type: 'weight',
+        fieldId: 'pressure',
+        type: 'pressure',
         severity: 'warning',
-        title: '🟡 Peso por debajo del rango',
-        message: `El peso registrado (${pesoNum} kg) parece bajo. Consulta con tu médico si esto te preocupa.`,
-        action: 'Comenta el dato con tu profesional de salud.',
-      });
-    } else if (pesoNum > ALERT_THRESHOLDS.WEIGHT_MAX_KG) {
-      alerts.push({
-        type: 'weight',
-        severity: 'warning',
-        title: '🟡 Peso por encima del rango',
-        message: `El peso registrado (${pesoNum} kg) supera el rango esperado.`,
-        action: 'Comenta el dato con tu profesional de salud.',
+        title: 'Presión arterial baja',
+        message: `Tu presión (${sys}/${dia} mmHg) está un poco baja. Puede hacerte sentir mareada o con poca energía.`,
+        action: 'Hidratación y descanso ayudan. Si persiste, coméntalo con tu médico.',
       });
     }
   }
 
   // ─── Sueño ────────────────────────────────────────────────────────
+  // Solo se alerta si hay privación severa (<4h), para no generar ruido con valores
+  // moderados que son muy comunes en el embarazo y post-parto.
   if (!Number.isNaN(horasNum) && horasNum > 0 && horasNum < ALERT_THRESHOLDS.SLEEP_MIN_HOURS) {
     alerts.push({
+      fieldId: 'sleep',
       type: 'sleep',
       severity: 'warning',
-      title: '🟡 Privación severa de sueño',
-      message: `Registraste solo ${horasNum} horas de sueño. Menos de 4 horas es privación severa que afecta tu salud y la del bebé.`,
-      action: 'Intenta descansar más. Si es persistente, coméntalo con tu médico.',
+      title: 'Descanso importante',
+      message: `Registraste solo ${horasNum} horas de sueño. Sabemos que es muy difícil, pero tu cuerpo necesita recuperar energía.`,
+      action: 'Cuando puedas, busca un momento para descansar. No dudes en pedir ayuda.',
     });
   }
 
-  // ─── Síntomas Críticos Maternos (ACOG) ───────────────────────────
+  // ─── Síntomas Maternos (dolor_cabeza / hinchazon_pies) ───────────
+  // Claves mapeadas 1:1 con columnas de biometria_madre en Supabase.
+  // DISEÑO DELIBERADO: solos NO generan alerta (son síntomas demasiado comunes
+  // en el embarazo y generarían ruido / ansiedad innecesaria).
+  // Solo escalan si coinciden con presión alta ≥140/90 (cuadro de posible preeclampsia).
   if (sintomas && typeof sintomas === 'object') {
-    for (const sintomaRojo of ALERT_THRESHOLDS.SYMPTOM_RED_FLAGS) {
-      if (sintomas[sintomaRojo]) {
+    const isHighBP = !Number.isNaN(sys) && !Number.isNaN(dia) && (sys >= 140 || dia >= 90);
+
+    for (const symptomKey of ALERT_THRESHOLDS.SYMPTOM_WARNING_FLAGS) {
+      if (sintomas[symptomKey] && isHighBP) {
         alerts.push({
+          fieldId: 'symptom',
+          symptomName: symptomKey,
           type: 'symptom',
           severity: 'danger',
-          title: `🔴 Síntoma de alarma: ${sintomaRojo}`,
-          message: `"${sintomaRojo}" es una señal de advertencia urgente según ACOG, especialmente si va acompañada de presión alta o cambios visuales.`,
-          action: 'Contacta a tu profesional de salud hoy.',
+          title: 'Síntomas a observar juntos',
+          message: 'Marcaste este síntoma y tu presión arterial está elevada. Esta combinación es importante que la evalúe tu profesional de salud.',
+          action: 'Te sugerimos comunicarte con tu centro de salud hoy.',
         });
       }
     }
 
     // ─── Salud Mental (EPDS adaptado) ─────────────────────────────
-    const sintomasMentalesActivos = ALERT_THRESHOLDS.SYMPTOM_MENTAL_HEALTH.filter(
-      (s) => sintomas[s]
-    );
+    // Claves: tristeza, ansiedad, culpa, irritabilidad — columnas de biometria_madre.
+    // Se activa solo si 3 o más coinciden simultáneamente para evitar falsos positivos.
+    const sintomasMentalesActivos = ALERT_THRESHOLDS.SYMPTOM_MENTAL_HEALTH.filter((s) => sintomas[s]);
     if (sintomasMentalesActivos.length >= ALERT_THRESHOLDS.MENTAL_HEALTH_THRESHOLD) {
       alerts.push({
+        fieldId: 'mental_health',
         type: 'mental_health',
         severity: 'warning',
-        title: '💛 Posibles señales de estrés emocional',
-        message: `Registraste ${sintomasMentalesActivos.length} síntomas emocionales simultáneos. Esto puede indicar estrés posparto o depresión postparto.`,
-        action: 'Habla con tu médico o matrona. No estás sola.',
+        title: 'Cuidando tus emociones',
+        message: 'Hemos notado que marcaste varios síntomas emocionales. Es completamente normal sentirse así, pero no tienes que atravesarlo sola.',
+        action: 'Considera hablar con alguien de confianza, tu médico o matrona puede orientarte.',
       });
     }
   }
@@ -126,90 +122,126 @@ export function analyzeBiometricData({ peso, horasSueno, presionSistolica, presi
 
 /**
  * Analiza los síntomas del BEBÉ y retorna un array de alertas.
- * Cada alerta: { type, severity, title, message, action }
+ *
+ * Parámetros esperados: { sintomas, movimientos, etapa }
+ *   sintomas:    objeto con claves snake_case → columnas de metricas_bebe en Supabase
+ *                Ej: { fiebre: true, rechazo_alimento: true, llanto_prolongado: false, ... }
+ *   movimientos: objeto con claves snake_case de movimientos fetales (solo pre_parto)
+ *                Ej: { movimiento_fetal: false, sin_movimiento: true, ... }
+ *   etapa:       'pre_parto' | 'post_parto'
+ *
+ * Cada alerta retornada: { fieldId, symptomName, symptomNames?, type, severity, title, message, action }
+ *
+ * NOTA DE DISEÑO — Alerta combinada:
+ *   Si rechazo_alimento + llanto_prolongado están activos simultáneamente,
+ *   se genera UN SOLO objeto de alerta con 'symptomNames' como array para
+ *   que la UI pueda resaltar ambos checkboxes sin duplicar tarjetas.
  */
 export function analyzeBabyData({ sintomas, movimientos, etapa }) {
   const alerts = [];
 
   if (!sintomas || typeof sintomas !== 'object') return alerts;
 
-  // ─── Fiebre → EMERGENCIA (AAP) ────────────────────────────────────
-  const tieneFiebre = ALERT_THRESHOLDS.BABY_EMERGENCY_SYMPTOMS.some((s) => sintomas[s]);
-  if (tieneFiebre) {
+  // ─── Fiebre (columna: fiebre) ─────────────────────────────────────
+  // Referencia: AAP — cualquier fiebre en lactantes menores requiere evaluación.
+  if (sintomas[ALERT_THRESHOLDS.BABY_FEVER_SYMPTOM]) {
     alerts.push({
+      fieldId: 'symptom',
+      symptomName: ALERT_THRESHOLDS.BABY_FEVER_SYMPTOM,
       type: 'baby_fever',
-      severity: 'emergency',
-      title: '🚨 Fiebre en el bebé — Emergencia',
-      message: 'Reportaste fiebre en tu bebé. Según la AAP, cualquier fiebre (≥38°C) en bebés pequeños es una emergencia médica que requiere evaluación INMEDIATA.',
-      action: 'Lleva a tu bebé a urgencias pediátricas AHORA.',
+      severity: 'danger',
+      title: 'Atención a la temperatura',
+      message: 'Nos indicas que tu bebé tiene temperatura anómala. Para su bienestar, es recomendable que un profesional lo evalúe.',
+      action: 'Contacta a tu pediatra para que te oriente sobre los pasos a seguir.',
     });
   }
 
-  // ─── Rechazo de alimento + Llanto → PELIGRO (AAP) ────────────────
-  const [sintomaA, sintomaB] = ALERT_THRESHOLDS.BABY_COMBINED_DANGER;
-  const tieneRechazo = !!sintomas[sintomaA];
-  const tieneLlanto = !!sintomas[sintomaB];
+  // ─── Rechazo + Llanto (columnas: rechazo_alimento, llanto_prolongado) ───
+  // REGLA DE UNIFICACIÓN: si ambos síntomas están activos → un solo objeto de alerta.
+  // Esto evita renderizar tarjetas duplicadas en la UI.
+  // El campo 'symptomNames' permite que la UI resalte ambos checkboxes simultáneamente.
+  const [keyRechazo, keyLlanto] = ALERT_THRESHOLDS.BABY_COMBINED_DANGER;
+  const tieneRechazo = !!sintomas[keyRechazo];
+  const tieneLlanto  = !!sintomas[keyLlanto];
 
   if (tieneRechazo && tieneLlanto) {
     alerts.push({
+      fieldId: 'symptom',
+      symptomName: keyRechazo,               // síntoma principal (lleva el ícono)
+      symptomNames: [keyRechazo, keyLlanto], // ambas claves para resaltar en UI
       type: 'baby_feeding_crying',
       severity: 'danger',
-      title: '🔴 Rechazo de alimento con llanto inconsolable',
-      message: 'La combinación de rechazo de alimento y llanto prolongado puede indicar cólico severo, infección o problema gastrointestinal (AAP).',
-      action: 'Contacta a tu pediatra el mismo día.',
+      title: 'Combinación de síntomas',
+      message: 'El rechazo de alimento junto con el llanto prolongado puede indicar que algo le incomoda al bebé (cólicos, molestias gástricas u otros).',
+      action: 'Te sugerimos comentárselo a tu pediatra el día de hoy.',
     });
   } else if (tieneRechazo) {
     alerts.push({
+      fieldId: 'symptom',
+      symptomName: keyRechazo,
       type: 'baby_feeding',
       severity: 'warning',
-      title: '🟡 Rechazo de alimento',
-      message: 'Tu bebé rechazó el alimento. Si es persistente, requiere atención pediátrica.',
-      action: 'Observa 24h. Si persiste, consulta con tu pediatra.',
+      title: 'Alimentación del bebé',
+      message: 'El rechazo de alimento puede ser algo temporal. A veces los bebés necesitan más tiempo o tienen días difíciles.',
+      action: 'Observa cómo evoluciona. Si persiste más de un día, consúltalo con tu pediatra.',
     });
   } else if (tieneLlanto) {
     alerts.push({
+      fieldId: 'symptom',
+      symptomName: keyLlanto,
       type: 'baby_crying',
       severity: 'warning',
-      title: '🟡 Llanto prolongado',
-      message: 'Tu bebé presentó llanto prolongado. Puede ser cólicos, pero si es inconsolable o inusual, merece atención.',
-      action: 'Observa su comportamiento. Consulta si no mejora.',
+      title: 'Llanto prolongado',
+      message: 'El llanto es la principal forma de comunicación del bebé. Sabemos que puede ser agotador escucharlo.',
+      action: 'Si el llanto te parece inusual o no responde a nada, consúltalo con el médico.',
     });
   }
 
-  // ─── Síntomas de vigilancia ───────────────────────────────────────
-  if (sintomas['Alteraciones en la piel del bebé']) {
+  // ─── Alteraciones en la piel (columna: alteraciones_piel) ────────
+  if (sintomas.alteraciones_piel) {
     alerts.push({
+      fieldId: 'symptom',
+      symptomName: 'alteraciones_piel',
       type: 'baby_skin',
-      severity: 'warning',
-      title: '🟡 Alteraciones en la piel del bebé',
-      message: 'Las alteraciones en la piel pueden ser eccema, reacciones alérgicas u otras condiciones que requieren revisión.',
-      action: 'Muéstrale la piel al pediatra en la próxima consulta o antes si se extiende.',
+      severity: 'info',
+      title: 'Piel del bebé',
+      message: 'Las alteraciones leves en la piel son muy frecuentes en los bebés.',
+      action: 'Menciónalo en tu próximo control. Si se extiende o empeora, consúltalo antes.',
     });
   }
 
-  if (sintomas['Problemas de sueño']) {
+  // ─── Problemas de sueño (columna: problemas_suenio) ──────────────
+  // Se mantiene a nivel 'info' — es el síntoma de menor gravedad y el más común.
+  // No se eleva para no saturar la UI con avisos de escaso valor clínico.
+  if (sintomas.problemas_suenio) {
     alerts.push({
+      fieldId: 'symptom',
+      symptomName: 'problemas_suenio',
       type: 'baby_sleep',
       severity: 'info',
-      title: '🔵 Problemas de sueño del bebé',
-      message: 'Los problemas de sueño son comunes, pero si el bebé está inusualmente dormido o difícil de despertar, puede ser señal de alerta.',
-      action: 'Si el bebé está letárgico o difícil de despertar, contacta al pediatra.',
+      title: 'Sueño del bebé',
+      message: 'Los cambios en el patrón de sueño son muy comunes en los primeros meses.',
+      action: 'Si el bebé está difícil de despertar o muy inusual, coméntalo con tu pediatra.',
     });
   }
 
-  // ─── Ausencia de movimiento fetal (pre-parto) ─────────────────────
-  if (etapa === 'pre_parto' && movimientos) {
-    const sinMovimiento =
-      !movimientos['Movimiento fetal activo'] &&
-      !movimientos['Cambio de intensidad'];
+  // ─── Ausencia / disminución de movimiento fetal (pre-parto) ──────
+  // Columnas: movimiento_fetal, cambio_intensidad, sin_movimiento, disminucion_movimiento
+  // Solo genera alerta si hay ausencia/disminución explícita Y no hay movimiento positivo.
+  if (etapa === 'pre_parto' && movimientos && typeof movimientos === 'object') {
+    const hayMovimiento = movimientos.movimiento_fetal || movimientos.cambio_intensidad;
+    const hayAusencia   = movimientos.sin_movimiento || movimientos.disminucion_movimiento;
 
-    if (sinMovimiento) {
+    if (!hayMovimiento && hayAusencia) {
+      const symptomKey = movimientos.sin_movimiento ? 'sin_movimiento' : 'disminucion_movimiento';
       alerts.push({
+        fieldId: 'symptom',
+        symptomName: symptomKey,
         type: 'fetal_movement',
         severity: 'danger',
-        title: '🔴 Sin movimiento fetal reportado',
-        message: 'No reportaste movimiento fetal. A partir de la semana 28, la disminución o ausencia de movimientos fetales requiere evaluación obstétrica.',
-        action: 'Contacta a tu matrona u obstetra hoy.',
+        title: 'Movimientos de tu bebé',
+        message: 'Registraste una disminución o ausencia de movimientos fetales. Es importante asegurarse de que todo vaya bien.',
+        action: 'Comunícate con tu matrona u obstetra para un chequeo que te dé tranquilidad.',
       });
     }
   }
@@ -219,12 +251,11 @@ export function analyzeBabyData({ sintomas, movimientos, etapa }) {
 
 /**
  * Retorna el estado de salud global basado en las alertas generadas.
- * 'ok' | 'info' | 'warning' | 'danger' | 'emergency'
+ * 'ok' | 'info' | 'warning' | 'danger'
  */
 export function getHealthStatus(alerts) {
   if (!alerts || alerts.length === 0) return 'ok';
-  if (alerts.some((a) => a.severity === 'emergency')) return 'emergency';
-  if (alerts.some((a) => a.severity === 'danger')) return 'danger';
+  if (alerts.some((a) => a.severity === 'danger'))  return 'danger';
   if (alerts.some((a) => a.severity === 'warning')) return 'warning';
   return 'info';
 }

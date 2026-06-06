@@ -49,28 +49,29 @@ export const ALERT_THRESHOLDS = {
   WEIGHT_MIN_KG: 40,
   WEIGHT_MAX_KG: 200,
 
-  // ── Síntomas Maternos Críticos (ACOG Urgent Warning Signs) ────────
-  // Estos síntomas disparan alerta PELIGRO de forma aislada.
-  SYMPTOM_RED_FLAGS: [
-    'Dolor de cabeza',
-    'Hinchazón de pies',
+  // ── Síntomas Maternos (ACOG Warning Signs) ────────────────────────
+  // Claves snake_case = columnas de biometria_madre en Supabase
+  // Generan ADVERTENCIA por sí solos. Suben a PELIGRO si hay presión alta.
+  SYMPTOM_WARNING_FLAGS: [
+    'dolor_cabeza',
+    'hinchazon_pies',
   ],
 
   // ── Síntomas de Salud Mental (EPDS adaptado) ──────────────────────
+  // Claves snake_case = columnas de biometria_madre en Supabase
   // Si se marcan 3 o más de estos juntos → alerta ADVERTENCIA.
   SYMPTOM_MENTAL_HEALTH: [
-    'Tristeza persistente/Llanto',
-    'Ansiedad/Nerviosismo',
-    'Sentimiento de culpa',
-    'Irritabilidad',
+    'tristeza',
+    'ansiedad',
+    'culpa',
+    'irritabilidad',
   ],
   MENTAL_HEALTH_THRESHOLD: 3,
 
   // ── Síntomas del Bebé (AAP) ───────────────────────────────────────
-  // 'Fiebre/Temperatura anómala' → EMERGENCIA absoluta (solo)
-  // 'Rechazo de alimento' + 'Llanto prolongado' juntos → PELIGRO
-  BABY_EMERGENCY_SYMPTOMS: ['Fiebre/Temperatura anómala'],
-  BABY_COMBINED_DANGER: ['Rechazo de alimento', 'Llanto prolongado'],
+  // Claves snake_case = columnas de metricas_bebe en Supabase
+  BABY_FEVER_SYMPTOM: 'fiebre',
+  BABY_COMBINED_DANGER: ['rechazo_alimento', 'llanto_prolongado'],
 };
 
 // Claves de AsyncStorage
@@ -82,17 +83,31 @@ export const STORAGE_KEYS = {
   FUR_DATE: '@manualdelbebe_fur',
 };
 
-// Síntomas maternos (RF-05)
+// ─── Síntomas maternos ───────────────────────────────────
+// Claves snake_case = columnas de biometria_madre en Supabase.
+// El array define el orden de renderizado en UI.
 export const SINTOMAS_MATERNO = [
-  'Fatiga extrema',
-  'Dolor de cabeza',
-  'Hinchazón de pies',
-  'Náuseas/Problemas estomacales',
-  'Ansiedad/Nerviosismo',
-  'Tristeza persistente/Llanto',
-  'Irritabilidad',
-  'Sentimiento de culpa',
+  'fatiga',
+  'dolor_cabeza',
+  'hinchazon_pies',
+  'nauseas',
+  'ansiedad',
+  'tristeza',
+  'irritabilidad',
+  'culpa',
 ];
+
+// Etiquetas legibles en español para cada clave de síntoma materno
+export const SINTOMAS_MATERNO_LABELS = {
+  fatiga:        'Fatiga extrema',
+  dolor_cabeza:  'Dolor de cabeza',
+  hinchazon_pies:'Hinchazón de pies',
+  nauseas:       'Náuseas / Problemas estomacales',
+  ansiedad:      'Ansiedad / Nerviosismo',
+  tristeza:      'Tristeza persistente / Llanto',
+  irritabilidad: 'Irritabilidad',
+  culpa:         'Sentimiento de culpa',
+};
 
 // Etapas del embarazo
 export const EMBARAZO_ETAPAS = {
@@ -101,22 +116,41 @@ export const EMBARAZO_ETAPAS = {
   desconocida: 'desconocida',
 };
 
-// Síntomas infantiles post-parto (RF-06)
+// ─── Síntomas infantiles post-parto ──────────────────────
+// Claves snake_case = columnas de metricas_bebe en Supabase.
 export const SINTOMAS_INFANTIL_POSTPARTO = [
-  'Llanto prolongado',
-  'Rechazo de alimento',
-  'Problemas de sueño',
-  'Fiebre/Temperatura anómala',
-  'Alteraciones en la piel del bebé',
+  'llanto_prolongado',
+  'rechazo_alimento',
+  'problemas_suenio',
+  'fiebre',
+  'alteraciones_piel',
 ];
 
-// Movimientos fetales pre-parto (RF-06)
+// Etiquetas legibles en español para cada clave de síntoma infantil
+export const SINTOMAS_INFANTIL_LABELS = {
+  llanto_prolongado: 'Llanto prolongado',
+  rechazo_alimento:  'Rechazo de alimento',
+  problemas_suenio:  'Problemas de sueño',
+  fiebre:            'Fiebre / Temperatura anómala',
+  alteraciones_piel: 'Alteraciones en la piel del bebé',
+};
+
+// ─── Movimientos fetales pre-parto ───────────────────────
+// Claves snake_case = columnas de metricas_bebe en Supabase.
 export const MOVIMIENTOS_FETALES = [
-  'Movimiento fetal activo',
-  'Disminución de movimiento fetal',
-  'Cambio de intensidad',
-  'Sin movimiento fetal',
+  'movimiento_fetal',
+  'cambio_intensidad',
+  'disminucion_movimiento',
+  'sin_movimiento',
 ];
+
+// Etiquetas legibles en español para cada clave de movimiento fetal
+export const MOVIMIENTOS_FETALES_LABELS = {
+  movimiento_fetal:       'Movimiento fetal activo',
+  cambio_intensidad:      'Cambio de intensidad',
+  disminucion_movimiento: 'Disminución de movimiento fetal',
+  sin_movimiento:         'Sin movimiento fetal',
+};
 
 // ─── Paleta de colores para tema oscuro ─────────────────
 export const DARK_COLORS = {
