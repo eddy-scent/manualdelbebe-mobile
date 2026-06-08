@@ -6,7 +6,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { EtapaProvider } from './src/context/EtapaContext';
-import { initializeMockData } from './src/services/mockService';
 import { initializeNotifications } from './src/services/notificationService';
 import InicioSesion from './src/screens/InicioSesion';
 import Registro from './src/screens/Registro';
@@ -63,7 +62,6 @@ function AppNavigation() {
       };
 
   useEffect(() => {
-    initializeMockData();
     initializeNotifications();
   }, []);
 

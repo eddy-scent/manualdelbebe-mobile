@@ -43,3 +43,7 @@ yarn-error.*
 
 # Supabase CLI (archivos locales por máquina, no compartir)
 supabase/.temp/
+
+# OpenCode / gentle-ai tool directories
+.atl/
+openspec/

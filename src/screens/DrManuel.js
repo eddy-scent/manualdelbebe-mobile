@@ -12,7 +12,7 @@ export default function DrManuel({ navigation }) {
   const { colors } = useTheme();
   
   // Reemplazar esta URL con la URL final de pruebas que entregó el cliente
-  const CHAT_TEST_URL = "https://mimanualdelbebe.com/chat";
+  const CHAT_TEST_URL = "https://chat.mimanualdelbebe.com/not_logged_in";
 
   return (
     <ScreenLayout>

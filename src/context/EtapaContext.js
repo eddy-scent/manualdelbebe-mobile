@@ -5,6 +5,21 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { storage, KEYS, determinarEtapa, calcularSemanasGestacion, calcularDiasRestantes, calcularFPP, calcularTrimestre, calcularEdadBebe, getDesarrolloSemanal, getHitoDesarrollo, formatDateKey } from '../services/dataService';
+import { getBabyProfile } from '../services/babyService';
+import { getLatestBiometricData } from '../services/biometricService';
+
+const parseDateString = (dateStr) => {
+  if (!dateStr) return null;
+  if (dateStr.includes('/')) {
+    const parts = dateStr.split('/');
+    return new Date(+parts[2], +parts[1] - 1, +parts[0]);
+  }
+  if (dateStr.includes('-')) {
+    const parts = dateStr.split('-');
+    return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+  }
+  return new Date(dateStr);
+};
 
 const EtapaContext = createContext(null);
 
@@ -30,7 +45,7 @@ export function EtapaProvider({ children }) {
 
     try {
       // Cargar perfil del bebé
-      const baby = await storage.get(KEYS.BABY_PROFILE);
+      const baby = await getBabyProfile();
       setBabyProfile(baby);
 
       // Determinar etapa
@@ -39,12 +54,10 @@ export function EtapaProvider({ children }) {
 
       // Cargar datos según etapa
       if (currentEtapa === 'pre_parto' && user.furDate) {
-        // Parsear fecha FUR (formato DD/MM/AAAA)
-        const parts = user.furDate.split('/');
-        const fur = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-        const semanas = calcularSemanasGestacion(fur);
-        const diasRestantes = calcularDiasRestantes(fur);
-        const fpp = calcularFPP(fur);
+        const fur = parseDateString(user.furDate);
+        const semanas = fur ? calcularSemanasGestacion(fur) : 0;
+        const diasRestantes = fur ? calcularDiasRestantes(fur) : 0;
+        const fpp = fur ? calcularFPP(fur) : null;
         const trimestre = calcularTrimestre(semanas);
         const desarrollo = getDesarrolloSemanal(semanas);
 
@@ -61,10 +74,9 @@ export function EtapaProvider({ children }) {
       if (currentEtapa === 'post_parto') {
         const fechaNac = baby?.fechaNac || user?.babyDate;
         if (fechaNac) {
-          const parts = fechaNac.split('/');
-          const nacDate = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-          const edad = calcularEdadBebe(nacDate);
-          const hito = getHitoDesarrollo(edad?.dias);
+          const nacDate = parseDateString(fechaNac);
+          const edad = nacDate ? calcularEdadBebe(nacDate) : null;
+          const hito = edad ? getHitoDesarrollo(edad.dias) : null;
 
           setBebeData({
             ...baby,
@@ -76,11 +88,8 @@ export function EtapaProvider({ children }) {
       }
 
       // Cargar última biometría
-      const allBio = await storage.getAll(KEYS.BIOMETRIC_PREFIX);
-      if (allBio.length > 0) {
-        const sorted = allBio.sort((a, b) => b.date.localeCompare(a.date));
-        setUltimaBiometria(sorted[0]);
-      }
+      const latestBio = await getLatestBiometricData();
+      setUltimaBiometria(latestBio);
 
       // Contar eventos de hoy
       const todayKey = formatDateKey(new Date());
