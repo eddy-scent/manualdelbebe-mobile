@@ -47,7 +47,7 @@ export default function Calendario({ navigation }) {
   const handleDeleteEvent = (eventId) => {
     Alert.alert(
       'Eliminar evento',
-      '¿Estás segura de que querés eliminar este evento?',
+      '¿Estás segura de que quieres eliminar este evento?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -141,7 +141,7 @@ export default function Calendario({ navigation }) {
           <View style={[styles.alertSection, { backgroundColor: colors.primary }]}>
             <View style={styles.alertHeader}>
               <Bell size={16} color="#ffffff" />
-              <Text style={styles.alertTitle}>Hoy tenés {todayEvents.length} {todayEvents.length === 1 ? 'evento' : 'eventos'}</Text>
+              <Text style={styles.alertTitle}>Hoy tienes {todayEvents.length} {todayEvents.length === 1 ? 'evento' : 'eventos'}</Text>
             </View>
             {todayEvents.map((event) => {
               const typeColor = TYPE_COLORS[event.type] || TYPE_COLORS.task;

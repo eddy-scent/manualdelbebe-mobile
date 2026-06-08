@@ -223,7 +223,7 @@ export default function Recordatorios({ navigation }) {
         {/* Info */}
         <View style={[styles.infoCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
           <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-            Las notificaciones se envían a tu dispositivo. Podés cambiar la configuración en cualquier momento.
+            Las notificaciones se envían a tu dispositivo. Puedes cambiar la configuración en cualquier momento.
           </Text>
         </View>
 

@@ -4,10 +4,14 @@
 // Pre-parto: movimiento fetal
 // Post-parto: peso, longitud, alimentación, síntomas
 // ──────────────────────────────────────────────────────────
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft, Check, Baby, Activity, Calendar, AlertCircle } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +29,8 @@ import { saveBabyData, getBabyData, getBabyProfile } from '../services/babyServi
 import { formatDateInput, isValidDate } from '../utils/validators';
 import { MOVIMIENTOS_FETALES, SINTOMAS_INFANTIL_POSTPARTO, SINTOMAS_INFANTIL_LABELS, MOVIMIENTOS_FETALES_LABELS } from '../utils/constants';
 import { analyzeBabyData } from '../services/alertService';
+
+const DRAFT_KEY = '@draft_perfil_hijo';
 
 export default function PerfilHijo({ navigation }) {
   const { user, updateProfile } = useAuth();
@@ -51,39 +58,67 @@ export default function PerfilHijo({ navigation }) {
   // ─── Estado de guardado ───
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const today = new Date();
   const dateDisplay = `${today.getDate()} de ${getMonthName(today.getMonth())} de ${today.getFullYear()}`;
 
+  // ─── Guardar borrador cuando la app va a segundo plano ───
   useEffect(() => {
-    const loadData = async () => {
-      setLoadingProfile(true);
-      setLoadError('');
-      try {
-        // Verificar si existe perfil del bebé
-        const profile = await getBabyProfile();
-        setBabyProfile(profile);
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'background') {
+        const draft = { movimientos, sintomas, etapa };
+        AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft)).catch(() => {});
+      }
+    });
+    return () => subscription.remove();
+  }, [movimientos, sintomas, etapa]);
 
-        // Cargar datos diarios
-        const data = await getBabyData();
-        if (data) {
-          if (etapa === 'pre_parto') {
-            setMovimientos(data.movimientos || {});
-          } else {
-            setSintomas(data.sintomas || {});
+  // ─── Carga de datos ───
+  const loadData = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setLoadingProfile(true);
+    setLoadError('');
+    try {
+      const profile = await getBabyProfile();
+      setBabyProfile(profile);
+
+      const data = await getBabyData();
+      if (data) {
+        if (etapa === 'pre_parto') {
+          setMovimientos(data.movimientos || {});
+        } else {
+          setSintomas(data.sintomas || {});
+        }
+      } else {
+        const draftRaw = await AsyncStorage.getItem(DRAFT_KEY);
+        if (draftRaw) {
+          const draft = JSON.parse(draftRaw);
+          if (etapa === 'pre_parto' && draft.movimientos) {
+            setMovimientos(draft.movimientos);
+          } else if (etapa === 'post_parto' && draft.sintomas) {
+            setSintomas(draft.sintomas);
           }
         }
-      } catch (e) {
-        console.error('Error loading baby data', e);
-        setLoadError(
-          'No se pudieron cargar los datos de tu bebé. Verificá tu conexión a internet y probá de nuevo.'
-        );
-      } finally {
-        setLoadingProfile(false);
       }
-    };
-    loadData();
+    } catch (e) {
+      console.error('Error loading baby data', e);
+      setLoadError(
+        'No se pudieron cargar los datos de tu bebé. Verifica tu conexión a internet y prueba de nuevo.'
+      );
+    } finally {
+      if (!isRefresh) setLoadingProfile(false);
+      setRefreshing(false);
+    }
   }, [etapa]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadData(true);
+  };
 
   const toggleMovimiento = (nombre) => {
     setMovimientos((prev) => ({ ...prev, [nombre]: !prev[nombre] }));
@@ -163,7 +198,7 @@ export default function PerfilHijo({ navigation }) {
       // Si tiene éxito, el componente se re-renderiza con etapa = 'post_parto'
     } catch (error) {
       console.error('Network error saving baby date', error);
-      setBabyDateError('Parece que no tenés conexión a internet. No se pudo guardar la fecha.');
+      setBabyDateError('Parece que no tienes conexión a internet. No se pudo guardar la fecha.');
     } finally {
       setSavingDate(false);
     }
@@ -195,7 +230,7 @@ export default function PerfilHijo({ navigation }) {
       console.error('Network or unexpected error saving baby data', error);
       Alert.alert(
         'Sin conexión',
-        'Parece que no tenés conexión a internet. Los datos de tu bebé no se pudieron guardar. Por favor, intentá de nuevo cuando tengas conexión.'
+        'Parece que no tienes conexión a internet. Los datos de tu bebé no se pudieron guardar. Por favor, intenta de nuevo cuando tengas conexión.'
       );
     } finally {
       setSaving(false);
@@ -220,6 +255,9 @@ export default function PerfilHijo({ navigation }) {
         style={[styles.checkboxRow, { borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }]}
         onPress={onToggle}
         activeOpacity={saving ? 1 : 0.7}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: isChecked }}
+        accessibilityLabel={label}
       >
         <View style={styles.checkboxLabelRow}>
           <Text style={[styles.checkboxLabel, { color: colors.text }, effectiveAlert && { color: effectiveAlert.severity === 'danger' ? '#C0445A' : '#C97A2A', fontWeight: '600' }]}>{label}</Text>
@@ -238,208 +276,224 @@ export default function PerfilHijo({ navigation }) {
 
   return (
     <ScreenLayout>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Top Bar */}
-        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <ArrowLeft size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <Text style={[styles.topbarTitle, { color: colors.primary }]}>Mi Bebé</Text>
-          <View style={styles.topbarSpacer} />
-        </View>
-
-        {/* Error de carga */}
-        {loadError ? (
-          <View style={[styles.errorBanner, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
-            <Text style={[styles.errorBannerText, { color: colors.danger }]}>{loadError}</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+        >
+          {/* Top Bar */}
+          <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
+            <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+              <ArrowLeft size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <Text style={[styles.topbarTitle, { color: colors.primary }]}>Mi Bebé</Text>
+            <View style={styles.topbarSpacer} />
           </View>
-        ) : null}
 
-        {/* Header con estilo de tarjeta */}
-        <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
-          <View style={styles.heroIconCircle}>
-            <Baby size={40} color="#ffffff" />
-          </View>
-          <Text style={styles.heroTitle}>
-            {babyProfile?.nombre || 'Mi Bebé'}
-          </Text>
-          <Text style={styles.heroSubtitle}>Hoy, {dateDisplay}</Text>
-
-          {/* Etapa badge */}
-          <View style={[styles.etapaBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-            <Text style={styles.etapaTextWhite}>
-              {etapa === 'pre_parto' ? 'Embarazo (Pre-parto)' : etapa === 'post_parto' ? 'Bebe nacido (Post-parto)' : 'Sin datos de etapa'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Info del perfil del bebé (si existe) */}
-        {babyProfile && (
-          <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.profileCardTitle, { color: colors.text }]}>Datos del bebé</Text>
-            <View style={styles.profileGrid}>
-              {babyProfile.sexo && (
-                <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Sexo</Text>
-                  <Text style={[styles.profileStatValue, { color: colors.text }]}>
-                    {babyProfile.sexo === 'masculino' ? 'Masculino' : 'Femenino'}
-                  </Text>
-                </View>
-              )}
-              {babyProfile.fechaNac && (
-                <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Nacimiento</Text>
-                  <Text style={[styles.profileStatValue, { color: colors.text }]}>{babyProfile.fechaNac}</Text>
-                </View>
-              )}
-              {babyProfile.pesoNac && (
-                <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Peso</Text>
-                  <Text style={[styles.profileStatValue, { color: colors.text }]}>{babyProfile.pesoNac} kg</Text>
-                </View>
-              )}
-              {babyProfile.tallaNac && (
-                <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
-                  <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Talla</Text>
-                  <Text style={[styles.profileStatValue, { color: colors.text }]}>{babyProfile.tallaNac} cm</Text>
-                </View>
-              )}
+          {/* Error de carga */}
+          {loadError ? (
+            <View style={[styles.errorBanner, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
+              <Text style={[styles.errorBannerText, { color: colors.danger }]}>{loadError}</Text>
             </View>
-            <TouchableOpacity
-              style={[styles.editProfileButton, { borderColor: colors.primary }]}
-              onPress={() => navigation.navigate('RegistroBebe')}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.editProfileText, { color: colors.primary }]}>Editar datos</Text>
-            </TouchableOpacity>
+          ) : null}
+
+          {/* Header con estilo de tarjeta */}
+          <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
+            <View style={styles.heroIconCircle}>
+              <Baby size={40} color="#ffffff" />
+            </View>
+            <Text style={styles.heroTitle}>
+              {babyProfile?.nombre || 'Mi Bebé'}
+            </Text>
+            <Text style={styles.heroSubtitle}>Hoy, {dateDisplay}</Text>
+
+            {/* Etapa badge */}
+            <View style={[styles.etapaBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
+              <Text style={styles.etapaTextWhite}>
+                {etapa === 'pre_parto' ? 'Embarazo (Pre-parto)' : etapa === 'post_parto' ? 'Bebe nacido (Post-parto)' : 'Sin datos de etapa'}
+              </Text>
+            </View>
           </View>
-        )}
 
-        {/* Sin perfil de bebé registrado */}
-        {!loadingProfile && !babyProfile && etapa !== 'desconocida' && (
-          <View style={[styles.warningCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-              Todavía no registraste los datos de tu bebé. Completa la información inicial para hacer un mejor seguimiento.
-            </Text>
-            <TouchableOpacity
-              style={[styles.warningButton, { backgroundColor: colors.primary }]}
-              onPress={() => navigation.navigate('RegistroBebe')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.warningButtonText}>Registrar datos del bebé</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Sin etapa definida — registrar fecha de nacimiento */}
-        {etapa === 'desconocida' && (
-          <View style={[styles.warningCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.warningTitle, { color: colors.text }]}>
-              Fecha de nacimiento del bebé
-            </Text>
-            <Text style={[styles.warningText, { color: colors.textSecondary }]}>
-              Ingresa la fecha de nacimiento de tu bebé para acceder al seguimiento.
-            </Text>
-
-            {babyDateError ? (
-              <View style={[styles.errorBox, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
-                <Text style={[styles.errorText, { color: colors.danger }]}>{babyDateError}</Text>
+          {/* Info del perfil del bebé (si existe) */}
+          {babyProfile && (
+            <View style={[styles.profileCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              <Text style={[styles.profileCardTitle, { color: colors.text }]}>Datos del bebé</Text>
+              <View style={styles.profileGrid}>
+                {babyProfile.sexo && (
+                  <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                    <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Sexo</Text>
+                    <Text style={[styles.profileStatValue, { color: colors.text }]}>
+                      {babyProfile.sexo === 'masculino' ? 'Masculino' : 'Femenino'}
+                    </Text>
+                  </View>
+                )}
+                {babyProfile.fechaNac && (
+                  <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                    <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Nacimiento</Text>
+                    <Text style={[styles.profileStatValue, { color: colors.text }]}>{babyProfile.fechaNac}</Text>
+                  </View>
+                )}
+                {babyProfile.pesoNac && (
+                  <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                    <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Peso</Text>
+                    <Text style={[styles.profileStatValue, { color: colors.text }]}>{babyProfile.pesoNac} kg</Text>
+                  </View>
+                )}
+                {babyProfile.tallaNac && (
+                  <View style={[styles.profileStatBox, { backgroundColor: colors.surfaceAlt }]}>
+                    <Text style={[styles.profileStatLabel, { color: colors.textSecondary }]}>Talla</Text>
+                    <Text style={[styles.profileStatValue, { color: colors.text }]}>{babyProfile.tallaNac} cm</Text>
+                  </View>
+                )}
               </View>
-            ) : null}
-
-            <View style={[styles.dateInputRow, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <Calendar size={18} color={colors.textTertiary} style={{ marginRight: 10 }} />
-              <TextInput
-                value={babyDateInput}
-                onChangeText={(t) => { setBabyDateInput(formatDateInput(t)); setBabyDateError(''); }}
-                onBlur={handleDateBlur}
-                placeholder="DD/MM/AAAA"
-                placeholderTextColor={colors.textTertiary}
-                style={[styles.dateInput, { color: colors.text }]}
-                keyboardType="number-pad"
-                maxLength={10}
-                editable={!savingDate}
-              />
+              <TouchableOpacity
+                style={[styles.editProfileButton, { borderColor: colors.primary }]}
+                onPress={() => navigation.navigate('RegistroBebe')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.editProfileText, { color: colors.primary }]}>Editar datos</Text>
+              </TouchableOpacity>
             </View>
+          )}
 
+          {/* Sin perfil de bebé registrado */}
+          {!loadingProfile && !babyProfile && etapa !== 'desconocida' && (
+            <View style={[styles.warningCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
+              <Text style={[styles.warningText, { color: colors.textSecondary }]}>
+                Todavía no registraste los datos de tu bebé. Completa la información inicial para hacer un mejor seguimiento.
+              </Text>
+              <TouchableOpacity
+                style={[styles.warningButton, { backgroundColor: colors.primary }]}
+                onPress={() => navigation.navigate('RegistroBebe')}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.warningButtonText}>Registrar datos del bebé</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Sin etapa definida — registrar fecha de nacimiento */}
+          {etapa === 'desconocida' && (
+            <View style={[styles.warningCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.cardBorder }]}>
+              <Text style={[styles.warningTitle, { color: colors.text }]}>
+                Fecha de nacimiento del bebé
+              </Text>
+              <Text style={[styles.warningText, { color: colors.textSecondary }]}>
+                Ingresa la fecha de nacimiento de tu bebé para acceder al seguimiento.
+              </Text>
+
+              {babyDateError ? (
+                <View style={[styles.errorBox, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
+                  <Text style={[styles.errorText, { color: colors.danger }]}>{babyDateError}</Text>
+                </View>
+              ) : null}
+
+              <View style={[styles.dateInputRow, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <Calendar size={18} color={colors.textTertiary} style={{ marginRight: 10 }} />
+                <TextInput
+                  value={babyDateInput}
+                  onChangeText={(t) => { setBabyDateInput(formatDateInput(t)); setBabyDateError(''); }}
+                  onBlur={handleDateBlur}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor={colors.textTertiary}
+                  style={[styles.dateInput, { color: colors.text }]}
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  editable={!savingDate}
+                  accessibilityLabel="Fecha de nacimiento del bebe"
+                  accessibilityHint="Ingresa la fecha en formato DD/MM/AAAA"
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.warningButton, { backgroundColor: colors.primary }]}
+                onPress={handleSaveBabyDate}
+                activeOpacity={0.85}
+                disabled={savingDate}
+              >
+                {savingDate ? (
+                  <ActivityIndicator color="#ffffff" size="small" />
+                ) : (
+                  <Text style={styles.warningButtonText}>Guardar fecha</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ═══════════════════════════════════════════
+              PRE-PARTO: Movimiento fetal
+              ═══════════════════════════════════════════ */}
+          {etapa === 'pre_parto' && (
+            <>
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Movimiento fetal</Text>
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <View style={styles.cardHeader}>
+                  <Activity size={20} color={colors.primary} />
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Registro de hoy</Text>
+                </View>
+                <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
+                  Selecciona las opciones que apliquen al movimiento fetal de hoy.
+                </Text>
+                <View style={styles.checkboxContainer}>
+                  {MOVIMIENTOS_FETALES.map((key) =>
+                    renderCheckbox(key, !!movimientos[key], () => !saving && toggleMovimiento(key), MOVIMIENTOS_FETALES_LABELS)
+                  )}
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* ═══════════════════════════════════════════
+              POST-PARTO: Métricas + Síntomas
+              ═══════════════════════════════════════════ */}
+          {etapa === 'post_parto' && (
+            <>
+              {/* Síntomas */}
+              <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Síntomas</Text>
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                <View style={styles.cardHeader}>
+                  <Activity size={20} color={colors.primary} />
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Síntomas de hoy</Text>
+                </View>
+                <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
+                  Selecciona los síntomas que presente el bebé hoy.
+                </Text>
+                <View style={styles.checkboxContainer}>
+                  {SINTOMAS_INFANTIL_POSTPARTO.map((key) =>
+                    renderCheckbox(key, !!sintomas[key], () => !saving && toggleSintoma(key), SINTOMAS_INFANTIL_LABELS)
+                  )}
+                </View>
+              </View>
+            </>
+          )}
+
+          {/* Botón guardar */}
+          {etapa !== 'desconocida' && (
             <TouchableOpacity
-              style={[styles.warningButton, { backgroundColor: colors.primary }]}
-              onPress={handleSaveBabyDate}
+              style={[styles.saveButton, { backgroundColor: colors.primary, opacity: saving ? 0.7 : 1 }]}
+              onPress={handleSave}
               activeOpacity={0.85}
-              disabled={savingDate}
+              disabled={saving}
+              accessibilityRole="button"
+              accessibilityLabel="Guardar datos del bebe"
             >
-              {savingDate ? (
-                <ActivityIndicator color="#ffffff" size="small" />
+              {saving ? (
+                <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.warningButtonText}>Guardar fecha</Text>
+                <Text style={styles.saveButtonText}>Guardar</Text>
               )}
             </TouchableOpacity>
-          </View>
-        )}
-
-        {/* ═══════════════════════════════════════════
-            PRE-PARTO: Movimiento fetal
-            ═══════════════════════════════════════════ */}
-        {etapa === 'pre_parto' && (
-          <>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Movimiento fetal</Text>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={styles.cardHeader}>
-                <Activity size={20} color={colors.primary} />
-                <Text style={[styles.cardTitle, { color: colors.text }]}>Registro de hoy</Text>
-              </View>
-              <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
-                Selecciona las opciones que apliquen al movimiento fetal de hoy.
-              </Text>
-              <View style={styles.checkboxContainer}>
-                {MOVIMIENTOS_FETALES.map((key) =>
-                  renderCheckbox(key, !!movimientos[key], () => !saving && toggleMovimiento(key), MOVIMIENTOS_FETALES_LABELS)
-                )}
-              </View>
-            </View>
-          </>
-        )}
-
-        {/* ═══════════════════════════════════════════
-            POST-PARTO: Métricas + Síntomas
-            ═══════════════════════════════════════════ */}
-        {etapa === 'post_parto' && (
-          <>
-            {/* Síntomas */}
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Síntomas</Text>
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={styles.cardHeader}>
-                <Activity size={20} color={colors.primary} />
-                <Text style={[styles.cardTitle, { color: colors.text }]}>Síntomas de hoy</Text>
-              </View>
-              <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
-                Selecciona los síntomas que presente el bebé hoy.
-              </Text>
-              <View style={styles.checkboxContainer}>
-                {SINTOMAS_INFANTIL_POSTPARTO.map((key) =>
-                  renderCheckbox(key, !!sintomas[key], () => !saving && toggleSintoma(key), SINTOMAS_INFANTIL_LABELS)
-                )}
-              </View>
-            </View>
-          </>
-        )}
-
-        {/* Botón guardar */}
-        {etapa !== 'desconocida' && (
-          <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary, opacity: saving ? 0.7 : 1 }]}
-            onPress={handleSave}
-            activeOpacity={0.85}
-            disabled={saving}
-          >
-            {saving ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.saveButtonText}>Guardar</Text>
-            )}
-          </TouchableOpacity>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenLayout>
   );
 }
@@ -483,6 +537,22 @@ const styles = StyleSheet.create({
   errorBannerText: {
     fontSize: 13,
     textAlign: 'center',
+    lineHeight: 18,
+  },
+  emptyStateCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  emptyStateTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  emptyStateText: {
+    fontSize: 13,
     lineHeight: 18,
   },
   heroCard: {

@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  AppState,
+  KeyboardAvoidingView,
+  Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,7 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ArrowLeft, Check, AlertCircle } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ArrowLeft, Check, AlertCircle, WifiOff } from 'lucide-react-native';
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -26,6 +31,8 @@ const BIOMETRIC_RANGES = {
   presionDiastolica: { min: 30, max: 150, label: 'Presión diastólica', unit: 'mmHg' },
 };
 
+const DRAFT_KEY = '@draft_perfil_mama';
+
 export default function PerfilMama({ navigation }) {
   const { user } = useAuth();
   const { colors, isDark } = useTheme();
@@ -40,37 +47,71 @@ export default function PerfilMama({ navigation }) {
 
   // ─── Estado de UI / UX ───
   const [loadingData, setLoadingData] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState('');
+  const [showEmptyState, setShowEmptyState] = useState(false);
+
+  const scrollViewRef = useRef(null);
 
   const today = new Date();
   const dateDisplay = `${today.getDate()} de ${getMonthName(today.getMonth())} de ${today.getFullYear()}`;
 
-  // ─── Carga inicial de datos del día ───
+  // ─── Guardar borrador cuando la app va a segundo plano ───
   useEffect(() => {
-    const loadToday = async () => {
-      setLoadingData(true);
-      setLoadError('');
-      try {
-        const data = await getBiometricData();
-        if (data) {
-          setPeso(data.peso ?? '');
-          setHorasSueno(data.horasSueno ?? '');
-          setPresionSistolica(data.presionSistolica ?? '');
-          setPresionDiastolica(data.presionDiastolica ?? '');
-          setSintomas(data.sintomas ?? {});
-        }
-      } catch (e) {
-        console.error('Error loading biometric data', e);
-        setLoadError(
-          'No se pudieron cargar tus datos de hoy. Verificá tu conexión a internet y probá de nuevo.'
-        );
-      } finally {
-        setLoadingData(false);
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'background') {
+        const draft = { peso, horasSueno, presionSistolica, presionDiastolica, sintomas };
+        AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(draft)).catch(() => {});
       }
-    };
-    loadToday();
+    });
+    return () => subscription.remove();
+  }, [peso, horasSueno, presionSistolica, presionDiastolica, sintomas]);
+
+  // ─── Carga inicial de datos del día ───
+  const loadToday = useCallback(async (isRefresh = false) => {
+    if (!isRefresh) setLoadingData(true);
+    setLoadError('');
+    try {
+      const data = await getBiometricData();
+      if (data) {
+        setPeso(data.peso ?? '');
+        setHorasSueno(data.horasSueno ?? '');
+        setPresionSistolica(data.presionSistolica ?? '');
+        setPresionDiastolica(data.presionDiastolica ?? '');
+        setSintomas(data.sintomas ?? {});
+        setShowEmptyState(false);
+      } else {
+        const draftRaw = await AsyncStorage.getItem(DRAFT_KEY);
+        if (draftRaw) {
+          const draft = JSON.parse(draftRaw);
+          setPeso(draft.peso ?? '');
+          setHorasSueno(draft.horasSueno ?? '');
+          setPresionSistolica(draft.presionSistolica ?? '');
+          setPresionDiastolica(draft.presionDiastolica ?? '');
+          setSintomas(draft.sintomas ?? {});
+        }
+        setShowEmptyState(true);
+      }
+    } catch (e) {
+      console.error('Error loading biometric data', e);
+      setLoadError(
+        'No se pudieron cargar tus datos de hoy. Verifica tu conexión a internet y prueba de nuevo.'
+      );
+    } finally {
+      if (!isRefresh) setLoadingData(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadToday();
+  }, [loadToday]);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadToday(true);
+  };
 
   const evaluateData = () => {
     const alerts = analyzeBiometricData({ peso, horasSueno, presionSistolica, presionDiastolica, sintomas });
@@ -167,6 +208,7 @@ export default function PerfilMama({ navigation }) {
     // ─── Validación de campos obligatorios ───
     if (!peso.trim() || !horasSueno.trim() || !presionSistolica.trim() || !presionDiastolica.trim()) {
       Alert.alert('Campos obligatorios', 'Por favor completa todos los campos obligatorios.');
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
@@ -174,6 +216,7 @@ export default function PerfilMama({ navigation }) {
     const validation = validateBiometricRanges();
     if (!validation.valid) {
       Alert.alert('Valor fuera de rango', validation.message);
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       return;
     }
 
@@ -194,6 +237,8 @@ export default function PerfilMama({ navigation }) {
       evaluateData(); // re-evaluamos por si acaso
 
       if (result.success) {
+        setShowEmptyState(false);
+        AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
         Alert.alert('Guardado', 'Tus datos se han registrado correctamente.');
       } else {
         Alert.alert('Error', result.message || 'No se pudieron guardar los datos.');
@@ -202,7 +247,7 @@ export default function PerfilMama({ navigation }) {
       console.error('Network or unexpected error saving biometric data', error);
       Alert.alert(
         'Sin conexión',
-        'Parece que no tenés conexión a internet. Tus datos no se pudieron guardar. Por favor, intentá de nuevo cuando tengas conexión.'
+        'Parece que no tienes conexión a internet. Tus datos no se pudieron guardar. Por favor, intenta de nuevo cuando tengas conexión.'
       );
     } finally {
       setSaving(false);
@@ -225,178 +270,215 @@ export default function PerfilMama({ navigation }) {
 
   return (
     <ScreenLayout>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Top Bar */}
-        <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
-          <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-            <ArrowLeft size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <Text style={[styles.topbarTitle, { color: colors.primary }]}>Mis Estadísticas</Text>
-          <View style={styles.topbarSpacer} />
-        </View>
-
-        {/* Error de carga */}
-        {loadError ? (
-          <View style={[styles.errorBanner, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
-            <Text style={[styles.errorBannerText, { color: colors.danger }]}>{loadError}</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+          }
+        >
+          {/* Top Bar */}
+          <View style={[styles.topbar, { backgroundColor: colors.surfaceAlt, borderBottomColor: colors.cardBorder }]}>
+            <TouchableOpacity style={[styles.backButton, { backgroundColor: colors.primaryBg }]} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+              <ArrowLeft size={20} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <Text style={[styles.topbarTitle, { color: colors.primary }]}>Mis Estadísticas</Text>
+            <View style={styles.topbarSpacer} />
           </View>
-        ) : null}
 
-        <Text style={[styles.dateDisplay, { color: colors.textSecondary }]}>Hoy, {dateDisplay}</Text>
+          {/* Error de carga */}
+          {loadError ? (
+            <View style={[styles.errorBanner, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
+              <WifiOff size={16} color={colors.danger} style={{ marginRight: 8 }} />
+              <Text style={[styles.errorBannerText, { color: colors.danger }]}>{loadError}</Text>
+            </View>
+          ) : null}
 
-        {/* Peso */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Peso materno (kg) *</Text>
-            {renderAlertIcon(getAlertForField('weight'))}
+          {/* Empty state: primera vez */}
+          {showEmptyState && !loadError ? (
+            <View style={[styles.emptyStateCard, { backgroundColor: colors.primaryBg, borderColor: colors.primary }]}>
+              <Text style={[styles.emptyStateTitle, { color: colors.primary }]}>¡Bienvenida!</Text>
+              <Text style={[styles.emptyStateText, { color: colors.textSecondary }]}>
+                Completá tus datos de hoy para empezar a monitorear tu salud.
+              </Text>
+            </View>
+          ) : null}
+
+          <Text style={[styles.dateDisplay, { color: colors.textSecondary }]}>Hoy, {dateDisplay}</Text>
+
+          {/* Peso */}
+          <View style={styles.section}>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Peso materno (kg) *</Text>
+              {renderAlertIcon(getAlertForField('weight'))}
+            </View>
+            <TextInput
+              value={peso}
+              onChangeText={setPeso}
+              onBlur={evaluateData}
+              placeholder="Ej: 68.5"
+              placeholderTextColor={colors.textTertiary}
+              style={[
+                styles.input,
+                { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }
+              ]}
+              keyboardType="decimal-pad"
+              editable={!saving}
+              accessibilityLabel="Peso materno en kilogramos"
+              accessibilityHint="Ingresa tu peso actual en kilogramos"
+            />
           </View>
-          <TextInput
-            value={peso}
-            onChangeText={setPeso}
-            onBlur={evaluateData}
-            placeholder="Ej: 68.5"
-            placeholderTextColor={colors.textTertiary}
-            style={[
-              styles.input,
-              { backgroundColor: colors.card, borderColor: colors.cardBorder, color: colors.text }
-            ]}
-            keyboardType="decimal-pad"
-            editable={!saving}
-          />
-        </View>
 
-        {/* Horas de sueño */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Horas de sueño *</Text>
-            {renderAlertIcon(getAlertForField('sleep'))}
+          {/* Horas de sueño */}
+          <View style={styles.section}>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Horas de sueño *</Text>
+              {renderAlertIcon(getAlertForField('sleep'))}
+            </View>
+            <TextInput
+              value={horasSueno}
+              onChangeText={setHorasSueno}
+              onBlur={evaluateData}
+              placeholder="Ej: 7"
+              placeholderTextColor={colors.textTertiary}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: colors.card,
+                  borderColor: getAlertForField('sleep') ? (getAlertForField('sleep').severity === 'danger' ? colors.danger : '#f5a623') : colors.cardBorder,
+                  color: colors.text
+                }
+              ]}
+              keyboardType="number-pad"
+              editable={!saving}
+              accessibilityLabel="Horas de sueño"
+              accessibilityHint="Ingresa las horas que dormiste en las ultimas 24 horas"
+            />
           </View>
-          <TextInput
-            value={horasSueno}
-            onChangeText={setHorasSueno}
-            onBlur={evaluateData}
-            placeholder="Ej: 7"
-            placeholderTextColor={colors.textTertiary}
-            style={[
-              styles.input,
+
+          {/* Presión arterial */}
+          <View style={styles.section}>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Presión arterial (mmHg) *</Text>
+              {renderAlertIcon(getAlertForField('pressure'))}
+            </View>
+            <View style={styles.inputRow}>
+              <TextInput
+                value={presionSistolica}
+                onChangeText={setPresionSistolica}
+                onBlur={evaluateData}
+                placeholder="Sistólica"
+                placeholderTextColor={colors.textTertiary}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: getAlertForField('pressure') ? (getAlertForField('pressure').severity === 'danger' ? colors.danger : '#f5a623') : colors.cardBorder,
+                    color: colors.text
+                  }
+                ]}
+                keyboardType="number-pad"
+                editable={!saving}
+                accessibilityLabel="Presion arterial sistolica"
+                accessibilityHint="Valor superior de la presion arterial"
+              />
+              <Text style={[styles.separator, { color: colors.textSecondary }]}>/</Text>
+              <TextInput
+                value={presionDiastolica}
+                onChangeText={setPresionDiastolica}
+                onBlur={evaluateData}
+                placeholder="Diastólica"
+                placeholderTextColor={colors.textTertiary}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: getAlertForField('pressure') ? (getAlertForField('pressure').severity === 'danger' ? colors.danger : '#f5a623') : colors.cardBorder,
+                    color: colors.text
+                  }
+                ]}
+                keyboardType="number-pad"
+                editable={!saving}
+                accessibilityLabel="Presion arterial diastolica"
+                accessibilityHint="Valor inferior de la presion arterial"
+              />
+            </View>
+          </View>
+
+          {/* Síntomas */}
+          <View style={styles.section}>
+            <View style={styles.labelRow}>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Síntomas</Text>
+              {renderAlertIcon(getAlertForField('mental_health'))}
+            </View>
+            <View style={[
+              styles.checkboxContainer,
               {
                 backgroundColor: colors.card,
-                borderColor: getAlertForField('sleep') ? (getAlertForField('sleep').severity === 'danger' ? colors.danger : '#f5a623') : colors.cardBorder,
-                color: colors.text
+                borderColor: getAlertForField('mental_health') ? '#f5a623' : colors.cardBorder
               }
-            ]}
-            keyboardType="number-pad"
-            editable={!saving}
-          />
-        </View>
+            ]}>
+              {SINTOMAS_MATERNO.map((key, index) => {
+                const isChecked = !!sintomas[key];
+                const isLast = index === SINTOMAS_MATERNO.length - 1;
+                const alertSymptom = getAlertForField('symptom', key);
+                const label = SINTOMAS_MATERNO_LABELS[key] || key;
 
-        {/* Presión arterial */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Presión arterial (mmHg) *</Text>
-            {renderAlertIcon(getAlertForField('pressure'))}
+                return (
+                  <View key={key}>
+                    <TouchableOpacity
+                      style={[
+                        styles.checkboxRow,
+                        !isLast && { borderBottomWidth: 1, borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }
+                      ]}
+                      onPress={() => !saving && toggleSintoma(key)}
+                      activeOpacity={saving ? 1 : 0.7}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isChecked }}
+                      accessibilityLabel={label}
+                    >
+                      <View style={styles.checkboxLabelRow}>
+                        <Text style={[styles.checkboxLabel, { color: colors.text }, alertSymptom && { color: alertSymptom.severity === 'danger' ? '#C0445A' : '#C97A2A', fontWeight: '600' }]}>{label}</Text>
+                        {renderAlertIcon(alertSymptom)}
+                      </View>
+                      <View style={[
+                        styles.checkboxBox,
+                        { borderColor: alertSymptom ? (alertSymptom.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary },
+                        isChecked && { backgroundColor: alertSymptom ? (alertSymptom.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary }
+                      ]}>
+                        {isChecked && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
           </View>
-          <View style={styles.inputRow}>
-            <TextInput
-              value={presionSistolica}
-              onChangeText={setPresionSistolica}
-              onBlur={evaluateData}
-              placeholder="Sistólica"
-              placeholderTextColor={colors.textTertiary}
-              style={[
-                styles.input,
-                styles.halfInput,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: getAlertForField('pressure') ? (getAlertForField('pressure').severity === 'danger' ? colors.danger : '#f5a623') : colors.cardBorder,
-                  color: colors.text
-                }
-              ]}
-              keyboardType="number-pad"
-              editable={!saving}
-            />
-            <Text style={[styles.separator, { color: colors.textSecondary }]}>/</Text>
-            <TextInput
-              value={presionDiastolica}
-              onChangeText={setPresionDiastolica}
-              onBlur={evaluateData}
-              placeholder="Diastólica"
-              placeholderTextColor={colors.textTertiary}
-              style={[
-                styles.input,
-                styles.halfInput,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: getAlertForField('pressure') ? (getAlertForField('pressure').severity === 'danger' ? colors.danger : '#f5a623') : colors.cardBorder,
-                  color: colors.text
-                }
-              ]}
-              keyboardType="number-pad"
-              editable={!saving}
-            />
-          </View>
-        </View>
 
-        {/* Síntomas */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Síntomas</Text>
-            {renderAlertIcon(getAlertForField('mental_health'))}
-          </View>
-          <View style={[
-            styles.checkboxContainer,
-            {
-              backgroundColor: colors.card,
-              borderColor: getAlertForField('mental_health') ? '#f5a623' : colors.cardBorder
-            }
-          ]}>
-            {SINTOMAS_MATERNO.map((key, index) => {
-              const isChecked = !!sintomas[key];
-              const isLast = index === SINTOMAS_MATERNO.length - 1;
-              const alertSymptom = getAlertForField('symptom', key);
-              const label = SINTOMAS_MATERNO_LABELS[key] || key;
-
-              return (
-                <View key={key}>
-                  <TouchableOpacity
-                    style={[
-                      styles.checkboxRow,
-                      !isLast && { borderBottomWidth: 1, borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }
-                    ]}
-                    onPress={() => !saving && toggleSintoma(key)}
-                    activeOpacity={saving ? 1 : 0.7}
-                  >
-                    <View style={styles.checkboxLabelRow}>
-                      <Text style={[styles.checkboxLabel, { color: colors.text }, alertSymptom && { color: alertSymptom.severity === 'danger' ? '#C0445A' : '#C97A2A', fontWeight: '600' }]}>{label}</Text>
-                      {renderAlertIcon(alertSymptom)}
-                    </View>
-                    <View style={[
-                      styles.checkboxBox,
-                      { borderColor: alertSymptom ? (alertSymptom.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary },
-                      isChecked && { backgroundColor: alertSymptom ? (alertSymptom.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary }
-                    ]}>
-                      {isChecked && <Check size={14} color="#ffffff" strokeWidth={3} />}
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.saveButton, { backgroundColor: colors.primary, opacity: saving ? 0.7 : 1 }]}
-          onPress={handleSave}
-          activeOpacity={0.85}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <Text style={styles.saveButtonText}>Guardar</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: colors.primary, opacity: saving ? 0.7 : 1 }]}
+            onPress={handleSave}
+            activeOpacity={0.85}
+            disabled={saving}
+            accessibilityRole="button"
+            accessibilityLabel="Guardar datos biometricos"
+          >
+            {saving ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Guardar</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenLayout>
   );
 }
@@ -445,10 +527,30 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 16,
     borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorBannerText: {
     fontSize: 13,
     textAlign: 'center',
+    lineHeight: 18,
+    flex: 1,
+  },
+  emptyStateCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  emptyStateTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  emptyStateText: {
+    fontSize: 13,
     lineHeight: 18,
   },
   section: {

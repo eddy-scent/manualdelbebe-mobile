@@ -7,6 +7,8 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { EtapaProvider } from './src/context/EtapaContext';
 import { initializeNotifications } from './src/services/notificationService';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import NetworkBanner from './src/components/NetworkBanner';
 import InicioSesion from './src/screens/InicioSesion';
 import Registro from './src/screens/Registro';
 import MainTabs from './src/navigation/MainTabs';
@@ -107,14 +109,18 @@ function AppNavigation() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <EtapaProvider>
-            <AppNavigation />
-          </EtapaProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <EtapaProvider>
+              <NetworkBanner>
+                <AppNavigation />
+              </NetworkBanner>
+            </EtapaProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
