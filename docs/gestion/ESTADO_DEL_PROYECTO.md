@@ -1,7 +1,7 @@
 # Estado del Proyecto — MomsAI
 
 **Fecha de actualización:** 8 de junio de 2026  
-**Versión actual:** 1.2.0  
+**Versión actual:** 1.2.1  
 **Stack:** React Native 0.81 + Expo SDK 54 + Supabase  
 **Plataformas:** Android + iOS  
 
@@ -21,6 +21,16 @@ MomsAI ha completado su integración con el backend serverless de **Supabase**, 
 - **Asistente Virtual (Dr. Manuel):** Integración nativa de la ventana de chat usando un componente WebView que apunta a la URL oficial `https://chat.mimanualdelbebe.com/not_logged_in`.
 - **Apariencia:** Soporte para cambio dinámico entre Modo Claro y Modo Oscuro en todas las pantallas.
 - **Seguridad RLS (Row Level Security):** Políticas activas en PostgreSQL que garantizan que una usuaria solo pueda leer y escribir sus propios registros médicos.
+
+### 1.1 Mejoras de Robustez y UX Implementadas (Junio 2026)
+
+- **Manejo Global de Errores:** Componente `ErrorBoundary` envuelve toda la aplicación para capturar errores de renderizado y mostrar una pantalla de recuperación amigable.
+- **Indicador de Estado de Red:** Banner visual `NetworkBanner` que detecta desconexiones en tiempo real usando `@react-native-community/netinfo` y advierte a la usuaria cuando no hay conectividad.
+- **Persistencia de Borradores:** Los formularios de `PerfilMama` y `PerfilHijo` guardan automáticamente borradores en `AsyncStorage` cuando la app se envía a segundo plano, evitando pérdida de datos por interrupciones.
+- **Pull-to-Refresh:** Implementado `RefreshControl` en las pantallas de perfil para permitir a la usuaria recargar datos manualmente desde Supabase.
+- **Mejoras de Teclado:** Agregado `KeyboardAvoidingView` y `keyboardShouldPersistTaps="handled"` para evitar que el teclado oculte campos de entrada o cierre el formulario accidentalmente.
+- **Accesibilidad:** Añadidas etiquetas `accessibilityLabel` e `accessibilityHint` a todos los inputs de texto, checkboxes y botones principales en `PerfilMama.js` y `PerfilHijo.js`.
+- **Manejo de Errores de Red:** Mensajes de error descriptivos y empáticos ante fallos de conexión en los servicios de guardado y carga de datos (ej. "Verifica tu conexión a internet y prueba de nuevo").
 
 ---
 
@@ -78,7 +88,38 @@ Como Asegurador de Calidad, se sugieren las siguientes pruebas e implementacione
   - Probar la app en modo avión / sin conexión.
   - Verificar que el WebView de Dr. Manuel muestre de manera limpia el mensaje `"Servicio de chat no disponible"` sin bloquear la navegación ni provocar el cierre de la aplicación.
   - Confirmar que los datos cargados previamente desde la base de datos se mantengan visibles en el Home.
+  - **Nuevo:** Verificar que los borradores de `PerfilMama` y `PerfilHijo` se recuperen correctamente después de cerrar y reabrir la app en segundo plano.
+  - **Nuevo:** Probar el pull-to-refresh en `PerfilMama` y `PerfilHijo` con conexión lenta (3G simulado) para validar estados de carga.
 
 ### 3.4 Pruebas de Interfaz Responsiva (Multi-dispositivo)
 - **Foco de prueba:** Cumplimiento de RNF-08.
 - **Acción sugerida:** Validar el comportamiento de los checkboxes de síntomas y el gráfico en pantallas de alta densidad (ej. iPhone 15 Pro) y de pantallas grandes (ej. iPad Mini o tabletas Android de 10"), asegurando que no existan cortes de texto ni desbordes.
+
+### 3.5 Pruebas de Accesibilidad
+- **Foco de prueba:** Cumplimiento de RNF-09.
+- **Acción sugerida:**
+  - Activar TalkBack (Android) o VoiceOver (iOS) y navegar los formularios de `PerfilMama` y `PerfilHijo`.
+  - Verificar que todos los campos de entrada y botones sean correctamente anunciados por el lector de pantalla.
+
+---
+
+## 4. Historial de Cambios Recientes
+
+### v1.2.1 — 8 de junio de 2026
+**Mejoras de Robustez, Accesibilidad y Normalización de Español**
+
+- **Frontend:**
+  - Agrega `ErrorBoundary` global para captura de errores de renderizado.
+  - Agrega `NetworkBanner` con detección de conectividad vía `@react-native-community/netinfo`.
+  - Implementa persistencia de borradores en `AsyncStorage` para `PerfilMama` y `PerfilHijo` (RNF-09).
+  - Agrega `RefreshControl` (pull-to-refresh) en pantallas de perfil.
+  - Agrega `KeyboardAvoidingView` y mejora manejo del teclado en formularios.
+  - Mejora estados de carga y mensajes de error ante fallos de red.
+  - Añade etiquetas de accesibilidad (`accessibilityLabel`, `accessibilityHint`, `accessibilityRole`) a inputs y botones.
+  - Normaliza español neutro: corrige acentos rioplatenses (`verificá`→`verifica`, `probá`→`prueba`, `tenés`→`tienes`, `podés`→`puedes`, etc.) en `Calendario.js`, `Recordatorios.js`, `PerfilMama.js` y `PerfilHijo.js`.
+
+- **Dependencias:**
+  - Instala `@react-native-community/netinfo` (^latest).
+
+**Archivos modificados:** `App.js`, `src/screens/PerfilMama.js`, `src/screens/PerfilHijo.js`, `src/screens/Calendario.js`, `src/screens/Recordatorios.js`, `package.json`, `package-lock.json`.  
+**Archivos nuevos:** `src/components/ErrorBoundary.js`, `src/components/NetworkBanner.js`.
