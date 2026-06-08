@@ -19,7 +19,7 @@ import { ArrowLeft, Check, Baby, Activity, Calendar, AlertCircle } from 'lucide-
 import ScreenLayout from '../components/ScreenLayout';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { parseDDMMYYYY, getTodayString, getMonthName } from '../services/dateService';
+import { getTodayString, getMonthName } from '../services/dateService';
 import { saveBabyData, getBabyData, getBabyProfile } from '../services/babyService';
 import { formatDateInput, isValidDate } from '../utils/validators';
 import { MOVIMIENTOS_FETALES, SINTOMAS_INFANTIL_POSTPARTO, SINTOMAS_INFANTIL_LABELS, MOVIMIENTOS_FETALES_LABELS } from '../utils/constants';
@@ -48,11 +48,17 @@ export default function PerfilHijo({ navigation }) {
   const [sintomas, setSintomas] = useState({});
   const [activeAlerts, setActiveAlerts] = useState([]);
 
+  // ─── Estado de guardado ───
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
   const today = new Date();
   const dateDisplay = `${today.getDate()} de ${getMonthName(today.getMonth())} de ${today.getFullYear()}`;
 
   useEffect(() => {
     const loadData = async () => {
+      setLoadingProfile(true);
+      setLoadError('');
       try {
         // Verificar si existe perfil del bebé
         const profile = await getBabyProfile();
@@ -69,6 +75,9 @@ export default function PerfilHijo({ navigation }) {
         }
       } catch (e) {
         console.error('Error loading baby data', e);
+        setLoadError(
+          'No se pudieron cargar los datos de tu bebé. Verificá tu conexión a internet y probá de nuevo.'
+        );
       } finally {
         setLoadingProfile(false);
       }
@@ -146,16 +155,23 @@ export default function PerfilHijo({ navigation }) {
     }
 
     setSavingDate(true);
-    const result = await updateProfile({ babyDate: babyDateInput });
-    setSavingDate(false);
-
-    if (!result.success) {
-      setBabyDateError(result.message || 'No se pudo guardar la fecha.');
+    try {
+      const result = await updateProfile({ babyDate: babyDateInput });
+      if (!result.success) {
+        setBabyDateError(result.message || 'No se pudo guardar la fecha.');
+      }
+      // Si tiene éxito, el componente se re-renderiza con etapa = 'post_parto'
+    } catch (error) {
+      console.error('Network error saving baby date', error);
+      setBabyDateError('Parece que no tenés conexión a internet. No se pudo guardar la fecha.');
+    } finally {
+      setSavingDate(false);
     }
-    // Si tiene éxito, el componente se re-renderiza con etapa = 'post_parto'
   };
 
   const handleSave = async () => {
+    setSaving(true);
+
     const data = {
       date: getTodayString(),
       etapa,
@@ -168,11 +184,21 @@ export default function PerfilHijo({ navigation }) {
       data.sintomas = sintomas;
     }
 
-    const result = await saveBabyData(data);
-    if (result.success) {
-      Alert.alert('Guardado', 'Los datos del bebé se guardaron correctamente.');
-    } else {
-      Alert.alert('Error', result.message);
+    try {
+      const result = await saveBabyData(data);
+      if (result.success) {
+        Alert.alert('Guardado', 'Los datos del bebé se guardaron correctamente.');
+      } else {
+        Alert.alert('Error', result.message || 'No se pudieron guardar los datos.');
+      }
+    } catch (error) {
+      console.error('Network or unexpected error saving baby data', error);
+      Alert.alert(
+        'Sin conexión',
+        'Parece que no tenés conexión a internet. Los datos de tu bebé no se pudieron guardar. Por favor, intentá de nuevo cuando tengas conexión.'
+      );
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -193,15 +219,15 @@ export default function PerfilHijo({ navigation }) {
         key={key}
         style={[styles.checkboxRow, { borderBottomColor: isDark ? colors.cardBorder : 'rgba(128,115,88,0.08)' }]}
         onPress={onToggle}
-        activeOpacity={0.7}
+        activeOpacity={saving ? 1 : 0.7}
       >
         <View style={styles.checkboxLabelRow}>
           <Text style={[styles.checkboxLabel, { color: colors.text }, effectiveAlert && { color: effectiveAlert.severity === 'danger' ? '#C0445A' : '#C97A2A', fontWeight: '600' }]}>{label}</Text>
           {renderAlertIcon(effectiveAlert)}
         </View>
         <View style={[
-          styles.checkboxBox, 
-          { borderColor: effectiveAlert ? (effectiveAlert.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary }, 
+          styles.checkboxBox,
+          { borderColor: effectiveAlert ? (effectiveAlert.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary },
           isChecked && { backgroundColor: effectiveAlert ? (effectiveAlert.severity === 'danger' ? '#E8697A' : '#E8913A') : colors.primary }
         ]}>
           {isChecked && <Check size={14} color="#ffffff" strokeWidth={3} />}
@@ -221,6 +247,13 @@ export default function PerfilHijo({ navigation }) {
           <Text style={[styles.topbarTitle, { color: colors.primary }]}>Mi Bebé</Text>
           <View style={styles.topbarSpacer} />
         </View>
+
+        {/* Error de carga */}
+        {loadError ? (
+          <View style={[styles.errorBanner, { backgroundColor: colors.dangerBg, borderColor: colors.danger }]}>
+            <Text style={[styles.errorBannerText, { color: colors.danger }]}>{loadError}</Text>
+          </View>
+        ) : null}
 
         {/* Header con estilo de tarjeta */}
         <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
@@ -325,6 +358,7 @@ export default function PerfilHijo({ navigation }) {
                 style={[styles.dateInput, { color: colors.text }]}
                 keyboardType="number-pad"
                 maxLength={10}
+                editable={!savingDate}
               />
             </View>
 
@@ -359,7 +393,7 @@ export default function PerfilHijo({ navigation }) {
               </Text>
               <View style={styles.checkboxContainer}>
                 {MOVIMIENTOS_FETALES.map((key) =>
-                  renderCheckbox(key, !!movimientos[key], () => toggleMovimiento(key), MOVIMIENTOS_FETALES_LABELS)
+                  renderCheckbox(key, !!movimientos[key], () => !saving && toggleMovimiento(key), MOVIMIENTOS_FETALES_LABELS)
                 )}
               </View>
             </View>
@@ -383,7 +417,7 @@ export default function PerfilHijo({ navigation }) {
               </Text>
               <View style={styles.checkboxContainer}>
                 {SINTOMAS_INFANTIL_POSTPARTO.map((key) =>
-                  renderCheckbox(key, !!sintomas[key], () => toggleSintoma(key), SINTOMAS_INFANTIL_LABELS)
+                  renderCheckbox(key, !!sintomas[key], () => !saving && toggleSintoma(key), SINTOMAS_INFANTIL_LABELS)
                 )}
               </View>
             </View>
@@ -393,11 +427,16 @@ export default function PerfilHijo({ navigation }) {
         {/* Botón guardar */}
         {etapa !== 'desconocida' && (
           <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            style={[styles.saveButton, { backgroundColor: colors.primary, opacity: saving ? 0.7 : 1 }]}
             onPress={handleSave}
             activeOpacity={0.85}
+            disabled={saving}
           >
-            <Text style={styles.saveButtonText}>Guardar</Text>
+            {saving ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Guardar</Text>
+            )}
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -434,6 +473,17 @@ const styles = StyleSheet.create({
   },
   topbarSpacer: {
     width: 40,
+  },
+  errorBanner: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  errorBannerText: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   heroCard: {
     alignItems: 'center',
@@ -603,26 +653,6 @@ const styles = StyleSheet.create({
   cardDesc: {
     fontSize: 13,
     lineHeight: 20,
-    marginBottom: 16,
-  },
-  fieldLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  fieldHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    marginLeft: 4,
-  },
-  input: {
-    height: 48,
-    borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    fontSize: 16,
     marginBottom: 16,
   },
   checkboxContainer: {
