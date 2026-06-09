@@ -73,7 +73,15 @@ export default function Calendario({ navigation }) {
   };
 
   const handleEditEvent = (event) => {
-    setEditingEvent(event);
+    // Si la fecha viene en formato YYYY-MM-DD (Supabase), la convertimos a DD/MM/AAAA para el formulario
+    let formattedDate = event.date;
+    if (event.date && event.date.includes('-')) {
+      const parts = event.date.split('-');
+      if (parts.length === 3) {
+        formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+    setEditingEvent({ ...event, date: formattedDate });
     setShowForm(true);
   };
 

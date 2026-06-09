@@ -61,10 +61,31 @@ export const formatDateInput = (text) => {
   return `${digits.substring(0, 2)}/${digits.substring(2, 4)}/${digits.substring(4)}`;
 };
 
+export const formatTimeInput = (text) => {
+  const digits = text.replace(/\D/g, '').substring(0, 4);
+  if (digits.length <= 2) return digits;
+  return `${digits.substring(0, 2)}:${digits.substring(2)}`;
+};
+
 export const formatDateOnBlur = (value) => {
   const digits = value.replace(/\D/g, '');
   if (digits.length === 8) {
     return `${digits.substring(0, 2)}/${digits.substring(2, 4)}/${digits.substring(4)}`;
   }
   return value;
+};
+
+export const isValidTime = (timeString) => {
+  if (!timeString) return true; // Si es opcional y está vacío, es válido
+  const parts = timeString.split(':');
+  if (parts.length !== 2) return false;
+
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return false;
+  if (hours < 0 || hours > 23) return false;
+  if (minutes < 0 || minutes > 59) return false;
+
+  return true;
 };

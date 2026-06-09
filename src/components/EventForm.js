@@ -4,6 +4,7 @@
 // ──────────────────────────────────────────────────────────
 import { useState } from 'react';
 import {
+  Alert,
   Modal,
   View,
   Text,
@@ -14,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { X, Stethoscope, Cake, Star, ClipboardList } from 'lucide-react-native';
-import { formatDateInput } from '../utils/validators';
+import { formatDateInput, formatTimeInput, isValidDate, isValidTime } from '../utils/validators';
 import { COLORS } from '../utils/constants';
 
 const EVENT_TYPES = [
@@ -36,6 +37,17 @@ export default function EventForm({ visible, onClose, onSave, editingEvent }) {
 
   const handleSave = () => {
     if (!title.trim()) return;
+
+    if (!isValidDate(date)) {
+      Alert.alert('Fecha inválida', 'Por favor ingresa una fecha válida en formato DD/MM/AAAA.');
+      return;
+    }
+
+    if (time && !isValidTime(time)) {
+      Alert.alert('Hora inválida', 'Por favor ingresa una hora válida (de 00:00 a 23:59).');
+      return;
+    }
+
     const event = {
       title: title.trim(),
       description: description.trim(),
@@ -130,11 +142,12 @@ export default function EventForm({ visible, onClose, onSave, editingEvent }) {
               <View style={styles.timeRow}>
                 <TextInput
                   value={time}
-                  onChangeText={setTime}
+                  onChangeText={(text) => setTime(formatTimeInput(text))}
                   placeholder="Ej: 10:00"
                   placeholderTextColor="#8a7176"
                   style={[styles.input, styles.halfInput]}
                   keyboardType="number-pad"
+                  maxLength={5}
                 />
                 <TouchableOpacity
                   style={[styles.periodButton, period === 'AM' && styles.periodButtonActive]}
